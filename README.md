@@ -6,6 +6,13 @@
 ![Maven](https://img.shields.io/badge/Apache_Maven-C71A36?style=for-the-badge&logo=apachemaven)
 ![Swing](https://img.shields.io/badge/Java_Swing-Desktop-lightgrey?style=for-the-badge)
 
+## 🎓 Informações Acadêmicas
+- **Atividade:** A3 - Projeto Avaliativo
+- **Universidade:** Universidade Anhembi Morumbi
+- **Curso:** Sistemas de Informação
+- **Unidade Curricular:** Programação de Soluções Computacionais
+- **Semestre:** 1º Semestre
+
 ## 📌 Visão Geral do Projeto
 Este projeto é um sistema desktop desenvolvido em Java para o gerenciamento corporativo de projetos, tarefas, equipes e controle de prazos. O foco da aplicação é entregar uma solução baseada nas melhores práticas de **Engenharia de Software**, garantindo manutenibilidade através de uma arquitetura limpa (MVC), banco de dados relacional e purismo na **Programação Orientada a Objetos**.
 
