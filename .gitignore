@@ -1,0 +1,22 @@
+# Arquivos de Documentação Privada
+context/
+
+# Build e Compilados do Java (Maven)
+target/
+*.class
+
+# Pastas de configuração de IDEs
+.idea/
+.vscode/
+*.iml
+*.project
+*.classpath
+.settings/
+
+# Arquivos do Astah temporários/backups
+*.asta#
+*.bak
+
+# Arquivos locais de Sistema Operacional
+.DS_Store
+Thumbs.db
