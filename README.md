@@ -43,6 +43,49 @@ O desenvolvimento arquitetural e o processo avaliativo do sistema iteram em proc
 
 ### Sprints de Avaliação e Entregas
 
-- **Sprint 1 (Fundações e Arquitetura):**
-  - 👉 [Sprint Backlog Geral](docs/sprints/sprint-01/backlog.md)
-  - 👉 [Relatório de Desenvolvimento Tático](docs/sprints/sprint-01/relatorio.md)
+| Sprint | Período | Escopo Oficial | Status |
+|--------|---------|----------------|--------|
+| **Sprint 1** | 22/03 – 28/03/2026 | Modelagem e Arquitetura | ✅ Concluído |
+| **Sprint 2** | 29/03 – 04/04/2026 | Banco de Dados e Camada Model | ✅ Concluído |
+| **Sprint 3** | 05/04 – 11/04/2026 | Repositories e Controllers | 🔄 Em andamento |
+| **Sprint 4** | 12/04 – 18/04/2026 | Interface Gráfica (Swing) e Integração | 🔜 Pendente |
+
+---
+
+#### Sprint 1 — Modelagem e Arquitetura `22/03 – 28/03/2026` ✅
+Levantamento de requisitos, criação do Diagrama Entidade-Relacionamento (DER) para a base de dados e do Diagrama de Classes UML. Criação do repositório no GitHub.
+- 👉 [Sprint Backlog](docs/sprints/sprint-01/backlog.md)
+- 👉 [Relatório de Desenvolvimento](docs/sprints/sprint-01/relatorio.md)
+
+#### Sprint 2 — Banco de Dados e Camada Model `29/03 – 04/04/2026` ✅
+Criação da base de dados relacional e migration Flyway para criação das tabelas. No código Java: implementação da camada Model com as entidades, configuração do Entity Manager (JPA) e construção da camada de persistência utilizando Hibernate.
+- 👉 [Sprint Backlog](docs/sprints/sprint-02/backlog.md)
+- 👉 [Relatório de Desenvolvimento](docs/sprints/sprint-02/relatorio.md)
+
+#### Sprint 3 — Repositories e Controllers `05/04 – 11/04/2026` 🔄
+Desenvolvimento da camada Repository para acesso a dados e mapeamento objeto-relacional com JPA/Hibernate. Criação da camada Controller para validar as regras de negócio e intermediar o fluxo entre a interface e a base de dados.
+
+#### Sprint 4 — Interface Gráfica (Swing) e Integração `12/04 – 18/04/2026` 🔜
+Construção das telas (camada View) utilizando os componentes gráficos do Java Swing. Integração dos formulários da interface com a camada Controller. Realização dos testes finais de fluxo e correção de eventuais bugs.
+
+## 🚀 Como Executar Localmente
+
+### Pré-requisitos
+- Java 21+
+- Maven 3.x
+- Docker e Docker Compose
+
+### 1. Subir o banco de dados
+```bash
+docker compose up -d
+```
+
+### 2. Executar as migrações Flyway
+```bash
+mvn flyway:migrate
+```
+
+### 3. Compilar e executar a aplicação
+```bash
+mvn compile exec:java -Dexec.mainClass="com.vbaggio.projectapp.Application"
+```
