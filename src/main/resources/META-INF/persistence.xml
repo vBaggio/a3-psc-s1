@@ -13,18 +13,13 @@
         <class>com.vbaggio.projectapp.model.entity.Equipe</class>
 
         <properties>
-            <!-- Conexao PostgreSQL -->
-            <property name="jakarta.persistence.jdbc.driver"   value="org.postgresql.Driver"/>
-            <property name="jakarta.persistence.jdbc.url"      value="jdbc:postgresql://localhost:5432/projectapp"/>
-            <property name="jakarta.persistence.jdbc.user"     value="postgres"/>
-            <property name="jakarta.persistence.jdbc.password" value="postgres"/>
-
-            <!-- Hibernate -->
-            <property name="hibernate.dialect"              value="org.hibernate.dialect.PostgreSQLDialect"/>
-            <property name="hibernate.show_sql"             value="true"/>
-            <property name="hibernate.format_sql"           value="true"/>
-            <!-- validate: Hibernate nao altera o schema, Flyway e quem controla -->
-            <property name="hibernate.hbm2ddl.auto"         value="validate"/>
+            <!-- Hibernate: comportamento e logging -->
+            <!-- As credenciais de conexão são injetadas em runtime pelo JpaUtil via db.properties -->
+            <property name="hibernate.dialect"    value="org.hibernate.dialect.PostgreSQLDialect"/>
+            <property name="hibernate.show_sql"   value="true"/>
+            <property name="hibernate.format_sql" value="true"/>
+            <!-- validate: Hibernate não altera o schema, Flyway e quem controla -->
+            <property name="hibernate.hbm2ddl.auto" value="validate"/>
         </properties>
 
     </persistence-unit>

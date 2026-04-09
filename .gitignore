@@ -17,6 +17,9 @@ target/
 *.asta#
 *.bak
 
+# Credenciais de banco — nunca comitar
+src/main/resources/db.properties
+
 # Arquivos locais de Sistema Operacional
 .DS_Store
 Thumbs.db

@@ -1,0 +1,10 @@
+# ============================================================
+# Exemplo de configuração de banco de dados.
+# Copie este arquivo para db.properties e ajuste os valores.
+# ============================================================
+
+db.url=jdbc:postgresql://localhost:5433/projectapp
+db.usuario=SEU_USUARIO
+db.senha=SUA_SENHA
+db.driver=org.postgresql.Driver
+db.persistence_unit=projectapp-pu
