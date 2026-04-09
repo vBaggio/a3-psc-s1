@@ -47,7 +47,7 @@ O desenvolvimento arquitetural e o processo avaliativo do sistema iteram em proc
 |--------|---------|----------------|--------|
 | **Sprint 1** | 22/03 – 28/03/2026 | Modelagem e Arquitetura | ✅ Concluído |
 | **Sprint 2** | 29/03 – 04/04/2026 | Banco de Dados e Camada Model | ✅ Concluído |
-| **Sprint 3** | 05/04 – 11/04/2026 | Repositories e Controllers | 🔄 Em andamento |
+| **Sprint 3** | 05/04 – 11/04/2026 | Repositories e Controllers | ✅ Concluído |
 | **Sprint 4** | 12/04 – 18/04/2026 | Interface Gráfica (Swing) e Integração | 🔜 Pendente |
 
 ---
@@ -62,8 +62,10 @@ Criação da base de dados relacional e migration Flyway para criação das tabe
 - 👉 [Sprint Backlog](docs/sprints/sprint-02/backlog.md)
 - 👉 [Relatório de Desenvolvimento](docs/sprints/sprint-02/relatorio.md)
 
-#### Sprint 3 — Repositories e Controllers `05/04 – 11/04/2026` 🔄
-Desenvolvimento da camada Repository para acesso a dados e mapeamento objeto-relacional com JPA/Hibernate. Criação da camada Controller para validar as regras de negócio e intermediar o fluxo entre a interface e a base de dados.
+#### Sprint 3 — Repositories e Controllers `05/04 – 11/04/2026` ✅
+Desenvolvimento da camada Repository para acesso a dados e mapeamento objeto-relacional com JPA/Hibernate. Criação da camada Controller para encapsular as regras de negócio e intermediar o fluxo entre a interface e a base de dados. Introdução do `JpaUtil` como Singleton do `EntityManagerFactory` e centralização de credenciais em `db.properties`.
+- 👉 [Sprint Backlog](docs/sprints/sprint-03/backlog.md)
+- 👉 [Relatório de Desenvolvimento](docs/sprints/sprint-03/relatorio.md)
 
 #### Sprint 4 — Interface Gráfica (Swing) e Integração `12/04 – 18/04/2026` 🔜
 Construção das telas (camada View) utilizando os componentes gráficos do Java Swing. Integração dos formulários da interface com a camada Controller. Realização dos testes finais de fluxo e correção de eventuais bugs.
@@ -75,12 +77,18 @@ Construção das telas (camada View) utilizando os componentes gráficos do Java
 - Maven 3.x
 - Docker e Docker Compose
 
-### 1. Subir o banco de dados
+### 1. Configurar credenciais do banco
+Copie o template e ajuste as credenciais para seu ambiente local:
+```bash
+cp src/main/resources/db.properties.example src/main/resources/db.properties
+```
+
+### 2. Subir o banco de dados
 ```bash
 docker compose up -d
 ```
 
-### 2. Executar as migrações Flyway
+### 3. Executar as migrações Flyway
 ```bash
 mvn flyway:migrate
 ```
