@@ -11,6 +11,7 @@
         <class>com.vbaggio.projectapp.model.entity.Usuario</class>
         <class>com.vbaggio.projectapp.model.entity.Projeto</class>
         <class>com.vbaggio.projectapp.model.entity.Equipe</class>
+        <class>com.vbaggio.projectapp.model.entity.Tarefa</class>
 
         <properties>
             <!-- Hibernate: comportamento e logging -->
