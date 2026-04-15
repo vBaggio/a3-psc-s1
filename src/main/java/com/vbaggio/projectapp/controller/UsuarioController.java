@@ -1,10 +1,14 @@
 package com.vbaggio.projectapp.controller;
 
 import com.vbaggio.projectapp.model.entity.Cargo;
+import com.vbaggio.projectapp.model.entity.Tarefa;
 import com.vbaggio.projectapp.model.entity.Usuario;
 import com.vbaggio.projectapp.model.enums.Perfil;
+import com.vbaggio.projectapp.model.enums.StatusTarefa;
 import com.vbaggio.projectapp.repository.CargoRepository;
+import com.vbaggio.projectapp.repository.TarefaRepository;
 import com.vbaggio.projectapp.repository.UsuarioRepository;
+import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.List;
 import java.util.UUID;
@@ -19,10 +23,12 @@ public class UsuarioController {
 
     private final UsuarioRepository usuarioRepo;
     private final CargoRepository   cargoRepo;
+    private final TarefaRepository  tarefaRepository;
 
     public UsuarioController() {
-        this.usuarioRepo = new UsuarioRepository();
-        this.cargoRepo   = new CargoRepository();
+        this.usuarioRepo      = new UsuarioRepository();
+        this.cargoRepo        = new CargoRepository();
+        this.tarefaRepository = new TarefaRepository();
     }
 
     /**
@@ -58,7 +64,7 @@ public class UsuarioController {
         usuario.setCpf(cpf.trim());
         usuario.setEmail(email.trim());
         usuario.setLogin(login.trim());
-        usuario.setSenha(senha);
+        usuario.setSenha(BCrypt.hashpw(senha, BCrypt.gensalt()));
         usuario.setPerfil(perfil);
 
         if (cargoId != null) {
@@ -87,7 +93,7 @@ public class UsuarioController {
         Usuario usuario = usuarioRepo.buscarPorLogin(login)
                 .orElseThrow(() -> new IllegalArgumentException("Usuário ou senha inválidos."));
 
-        if (!usuario.getSenha().equals(senha)) {
+        if (!BCrypt.checkpw(senha, usuario.getSenha())) {
             throw new IllegalArgumentException("Usuário ou senha inválidos.");
         }
 
@@ -135,21 +141,25 @@ public class UsuarioController {
      *
      * @param id      UUID do usuário
      * @param nome    novo nome
-     * @param cpf     novo CPF
-     * @param email   novo e-mail
-     * @param login   novo login
-     * @param perfil  novo perfil
-     * @param cargoId novo cargo (pode ser null)
+     * @param cpf       novo CPF
+     * @param email     novo e-mail
+     * @param login     novo login
+     * @param novaSenha nova senha em texto plano (null ou vazio = não altera)
+     * @param perfil    novo perfil
+     * @param cargoId   novo cargo (pode ser null)
      * @return entidade Usuario atualizada
      */
     public Usuario atualizarUsuario(UUID id, String nome, String cpf, String email,
-                                    String login, Perfil perfil, UUID cargoId) {
+                                    String login, String novaSenha, Perfil perfil, UUID cargoId) {
         Usuario usuario = buscarPorId(id);
 
         if (nome   != null && !nome.isBlank())  usuario.setNome(nome.trim());
         if (email  != null && !email.isBlank())  usuario.setEmail(email.trim());
         if (login  != null && !login.isBlank())  usuario.setLogin(login.trim());
         if (cpf    != null && !cpf.isBlank())  { validarCpf(cpf); usuario.setCpf(cpf.trim()); }
+        if (novaSenha != null && !novaSenha.isBlank()) {
+            usuario.setSenha(BCrypt.hashpw(novaSenha, BCrypt.gensalt()));
+        }
         if (perfil != null)                      usuario.setPerfil(perfil);
 
         validarUnicidade(usuario.getCpf(), usuario.getEmail(), usuario.getLogin(), id);
@@ -170,6 +180,17 @@ public class UsuarioController {
      */
     public void removerUsuario(UUID id) {
         buscarPorId(id); // garante que existe
+
+        List<Tarefa> tarefasAtivas = tarefaRepository.listarPorResponsavel(id);
+        boolean temTarefaAtiva = tarefasAtivas.stream()
+                .anyMatch(t -> t.getStatus() == StatusTarefa.PENDENTE
+                            || t.getStatus() == StatusTarefa.EM_ANDAMENTO);
+        if (temTarefaAtiva) {
+            throw new IllegalStateException(
+                    "Usuário possui tarefas ativas (PENDENTE ou EM_ANDAMENTO). Reatribua as tarefas antes de remover o usuário."
+            );
+        }
+
         usuarioRepo.deletar(id);
     }
 

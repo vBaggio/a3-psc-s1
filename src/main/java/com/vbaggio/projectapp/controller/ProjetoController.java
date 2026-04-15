@@ -1,12 +1,14 @@
 package com.vbaggio.projectapp.controller;
 
-import com.vbaggio.projectapp.model.entity.Equipe;
 import com.vbaggio.projectapp.model.entity.Projeto;
+import com.vbaggio.projectapp.model.entity.Tarefa;
 import com.vbaggio.projectapp.model.entity.Usuario;
 import com.vbaggio.projectapp.model.enums.Perfil;
 import com.vbaggio.projectapp.model.enums.StatusProjeto;
+import com.vbaggio.projectapp.model.enums.StatusTarefa;
 import com.vbaggio.projectapp.repository.EquipeRepository;
 import com.vbaggio.projectapp.repository.ProjetoRepository;
+import com.vbaggio.projectapp.repository.TarefaRepository;
 import com.vbaggio.projectapp.repository.UsuarioRepository;
 
 import java.time.LocalDate;
@@ -24,11 +26,13 @@ public class ProjetoController {
     private final ProjetoRepository  projetoRepo;
     private final UsuarioRepository  usuarioRepo;
     private final EquipeRepository   equipeRepo;
+    private final TarefaRepository   tarefaRepository;
 
     public ProjetoController() {
-        this.projetoRepo = new ProjetoRepository();
-        this.usuarioRepo = new UsuarioRepository();
-        this.equipeRepo  = new EquipeRepository();
+        this.projetoRepo      = new ProjetoRepository();
+        this.usuarioRepo      = new UsuarioRepository();
+        this.equipeRepo       = new EquipeRepository();
+        this.tarefaRepository = new TarefaRepository();
     }
 
     /**
@@ -89,7 +93,19 @@ public class ProjetoController {
         Projeto projeto = buscarPorId(projetoId);
         validarTransicaoStatus(projeto.getStatus(), novoStatus);
         projeto.setStatus(novoStatus);
-        return projetoRepo.atualizar(projeto);
+        Projeto atualizado = projetoRepo.atualizar(projeto);
+
+        if (novoStatus == StatusProjeto.CANCELADO) {
+            List<Tarefa> tarefasAtivas = tarefaRepository.listarPorProjeto(projetoId);
+            for (Tarefa t : tarefasAtivas) {
+                if (t.getStatus() == StatusTarefa.PENDENTE || t.getStatus() == StatusTarefa.EM_ANDAMENTO) {
+                    t.setStatus(StatusTarefa.CANCELADA);
+                    tarefaRepository.atualizar(t);
+                }
+            }
+        }
+
+        return atualizado;
     }
 
     /**
@@ -115,7 +131,17 @@ public class ProjetoController {
 
         projeto.setDataFim(dataFim);
         projeto.setStatus(StatusProjeto.CONCLUIDO);
-        return projetoRepo.atualizar(projeto);
+        Projeto concluido = projetoRepo.atualizar(projeto);
+
+        List<Tarefa> tarefasAtivas = tarefaRepository.listarPorProjeto(projetoId);
+        for (Tarefa t : tarefasAtivas) {
+            if (t.getStatus() == StatusTarefa.PENDENTE || t.getStatus() == StatusTarefa.EM_ANDAMENTO) {
+                t.setStatus(StatusTarefa.CANCELADA);
+                tarefaRepository.atualizar(t);
+            }
+        }
+
+        return concluido;
     }
 
     /**
@@ -129,7 +155,7 @@ public class ProjetoController {
     public void atribuirEquipe(UUID projetoId, UUID equipeId) {
         buscarPorId(projetoId); // valida existência
 
-        Equipe equipe = equipeRepo.buscarPorId(equipeId)
+        equipeRepo.buscarPorId(equipeId)
                 .orElseThrow(() -> new IllegalArgumentException("Equipe não encontrada: " + equipeId));
 
         List<Usuario> membros = equipeRepo.listarMembrosDaEquipe(equipeId);

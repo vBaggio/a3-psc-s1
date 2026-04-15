@@ -39,6 +39,13 @@
             <version>${postgresql.version}</version>
         </dependency>
 
+        <!-- BCrypt - Hash de senhas -->
+        <dependency>
+            <groupId>org.mindrot</groupId>
+            <artifactId>jbcrypt</artifactId>
+            <version>0.4</version>
+        </dependency>
+
         <!-- Flyway - Migracoes de banco -->
         <dependency>
             <groupId>org.flywaydb</groupId>
