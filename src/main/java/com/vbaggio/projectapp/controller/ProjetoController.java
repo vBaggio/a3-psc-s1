@@ -133,14 +133,6 @@ public class ProjetoController {
         projeto.setStatus(StatusProjeto.CONCLUIDO);
         Projeto concluido = projetoRepo.atualizar(projeto);
 
-        List<Tarefa> tarefasAtivas = tarefaRepository.listarPorProjeto(projetoId);
-        for (Tarefa t : tarefasAtivas) {
-            if (t.getStatus() == StatusTarefa.PENDENTE || t.getStatus() == StatusTarefa.EM_ANDAMENTO) {
-                t.setStatus(StatusTarefa.CANCELADA);
-                tarefaRepository.atualizar(t);
-            }
-        }
-
         return concluido;
     }
 

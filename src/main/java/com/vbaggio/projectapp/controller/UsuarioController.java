@@ -226,5 +226,11 @@ public class UsuarioController {
                 throw new IllegalArgumentException("Já existe um usuário com o login '" + login + "'.");
             }
         });
+
+        usuarioRepo.buscarPorEmail(email).ifPresent(u -> {
+            if (ignorarId == null || !u.getId().equals(ignorarId)) {
+                throw new IllegalArgumentException("E-mail já cadastrado.");
+            }
+        });
     }
 }
