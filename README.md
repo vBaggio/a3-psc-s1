@@ -43,12 +43,14 @@ O desenvolvimento arquitetural e o processo avaliativo do sistema iteram em proc
 
 ### Sprints de Avaliação e Entregas
 
-| Sprint | Período | Escopo Oficial | Status |
-|--------|---------|----------------|--------|
-| **Sprint 1** | 22/03 – 28/03/2026 | Modelagem e Arquitetura | ✅ Concluído |
-| **Sprint 2** | 29/03 – 04/04/2026 | Banco de Dados e Camada Model | ✅ Concluído |
-| **Sprint 3** | 05/04 – 11/04/2026 | Repositories e Controllers | ✅ Concluído |
-| **Sprint 4** | 12/04 – 18/04/2026 | Interface Gráfica (Swing) e Integração | 🔜 Pendente |
+| Sprint | Período | Escopo | Status |
+|--------|---------|--------|--------|
+| **Sprint 1** | 22/03 – 28/03/2026 | Modelagem & Arquitetura | ✅ Completo |
+| **Sprint 2** | 29/03 – 04/04/2026 | Banco de Dados & Camada de Modelo | ✅ Completo |
+| **Sprint 3** | 05/04 – 11/04/2026 | Repositórios & Controllers | ✅ Completo |
+| **Sprint 4** | 12/04 – 18/04/2026 | Refinamento do Backend & Entidade Tarefa | 🔄 Em andamento |
+| **Sprint 5** | a definir | Interface Gráfica (Swing) + FlatLaf | 🔜 Planejado |
+| **Sprint 6** | a definir | Relatórios de Desempenho | 🔜 Planejado |
 
 ---
 
@@ -67,8 +69,17 @@ Desenvolvimento da camada Repository para acesso a dados e mapeamento objeto-rel
 - 👉 [Sprint Backlog](docs/sprints/sprint-03/backlog.md)
 - 👉 [Relatório de Desenvolvimento](docs/sprints/sprint-03/relatorio.md)
 
-#### Sprint 4 — Interface Gráfica (Swing) e Integração `12/04 – 18/04/2026` 🔜
-Construção das telas (camada View) utilizando os componentes gráficos do Java Swing. Integração dos formulários da interface com a camada Controller. Realização dos testes finais de fluxo e correção de eventuais bugs.
+#### Sprint 4 — Refinamento do Backend & Entidade Tarefa `12/04 – 18/04/2026` ✅
+Complementação da camada de domínio com a entidade Tarefa, segurança no armazenamento de senhas com BCrypt e ajuste dos controllers existentes para integridade referencial com a nova entidade.
+- 👉 [Sprint Backlog](docs/sprints/sprint-04/backlog.md)
+- 👉 [Relatório de Desenvolvimento](docs/sprints/sprint-04/relatorio.md)
+
+#### Sprint 5 — Interface Gráfica (Swing) + FlatLaf `a definir` 🔜
+Construção das telas (camada View) utilizando os componentes gráficos do Java Swing com FlatLaf como Look & Feel moderno. Integração dos formulários da interface com a camada Controller.
+- 👉 [Sprint Backlog](docs/sprints/sprint-05/backlog.md)
+
+#### Sprint 6 — Relatórios de Desempenho `a definir` 🔜
+Implementação de relatórios e métricas de desempenho de projetos e equipes.
 
 ## 🚀 Como Executar Localmente
 
