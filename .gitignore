@@ -1,6 +1,9 @@
 # Arquivos de Documentação Privada
 context/
 
+# Arquivos internos de planejamento (superpowers/Claude)
+docs/superpowers/
+
 # Build e Compilados do Java (Maven)
 target/
 *.class
