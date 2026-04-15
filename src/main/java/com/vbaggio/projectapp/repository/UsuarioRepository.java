@@ -68,6 +68,25 @@ public class UsuarioRepository {
     }
 
     /**
+     * Busca um Usuário pelo e-mail — usado para validação de unicidade.
+     *
+     * @param email e-mail do usuário
+     * @return Optional com o usuário, ou vazio se não encontrado
+     */
+    public Optional<Usuario> buscarPorEmail(String email) {
+        EntityManager em = JpaUtil.getEntityManager();
+        try {
+            return em.createQuery(
+                            "SELECT u FROM Usuario u WHERE LOWER(u.email) = LOWER(:email)", Usuario.class)
+                    .setParameter("email", email)
+                    .getResultStream()
+                    .findFirst();
+        } finally {
+            em.close();
+        }
+    }
+
+    /**
      * Busca um Usuário pelo CPF — usado para validação de unicidade.
      *
      * @param cpf CPF sem formatação (11 dígitos)
