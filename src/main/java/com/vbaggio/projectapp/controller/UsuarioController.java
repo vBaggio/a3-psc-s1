@@ -47,7 +47,7 @@ public class UsuarioController {
      * @param cpf     CPF sem formatação (11 dígitos)
      * @param email   e-mail
      * @param login   login de acesso
-     * @param senha   senha (texto plano — hash será tratado no Sprint 4)
+     * @param senha   senha armazenada com hash BCrypt
      * @param perfil  perfil de acesso
      * @param cargoId UUID do cargo (pode ser null)
      * @return entidade Usuario persistida

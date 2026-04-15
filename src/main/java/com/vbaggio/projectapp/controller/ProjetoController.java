@@ -26,13 +26,13 @@ public class ProjetoController {
     private final ProjetoRepository  projetoRepo;
     private final UsuarioRepository  usuarioRepo;
     private final EquipeRepository   equipeRepo;
-    private final TarefaRepository   tarefaRepository;
+    private final TarefaRepository   tarefaRepo;
 
     public ProjetoController() {
         this.projetoRepo      = new ProjetoRepository();
         this.usuarioRepo      = new UsuarioRepository();
         this.equipeRepo       = new EquipeRepository();
-        this.tarefaRepository = new TarefaRepository();
+        this.tarefaRepo = new TarefaRepository();
     }
 
     /**
@@ -96,11 +96,11 @@ public class ProjetoController {
         Projeto atualizado = projetoRepo.atualizar(projeto);
 
         if (novoStatus == StatusProjeto.CANCELADO) {
-            List<Tarefa> tarefasAtivas = tarefaRepository.listarPorProjeto(projetoId);
+            List<Tarefa> tarefasAtivas = tarefaRepo.listarPorProjeto(projetoId);
             for (Tarefa t : tarefasAtivas) {
                 if (t.getStatus() == StatusTarefa.PENDENTE || t.getStatus() == StatusTarefa.EM_ANDAMENTO) {
                     t.setStatus(StatusTarefa.CANCELADA);
-                    tarefaRepository.atualizar(t);
+                    tarefaRepo.atualizar(t);
                 }
             }
         }
