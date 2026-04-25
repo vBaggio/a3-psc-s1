@@ -56,7 +56,7 @@ public class LoginPanel extends JPanel {
         String senha = new String(campSenha.getPassword());
         try {
             Usuario usuario = usuarioCtrl.autenticar(login, senha);
-            frame.mostrarDashboard(usuario);
+            frame.mostrarHome(usuario);
         } catch (Exception ex) {
             lblErro.setText(ex.getMessage());
             campSenha.setText("");
