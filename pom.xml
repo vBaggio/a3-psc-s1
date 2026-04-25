@@ -46,6 +46,13 @@
             <version>0.4</version>
         </dependency>
 
+        <!-- FlatLaf - Look & Feel moderno para Swing -->
+        <dependency>
+            <groupId>com.formdev</groupId>
+            <artifactId>flatlaf</artifactId>
+            <version>3.4.1</version>
+        </dependency>
+
         <!-- Flyway - Migracoes de banco -->
         <dependency>
             <groupId>org.flywaydb</groupId>
