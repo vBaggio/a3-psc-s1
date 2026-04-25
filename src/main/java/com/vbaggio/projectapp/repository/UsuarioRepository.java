@@ -114,7 +114,8 @@ public class UsuarioRepository {
         EntityManager em = JpaUtil.getEntityManager();
         try {
             return em.createQuery(
-                            "SELECT u FROM Usuario u ORDER BY u.nome", Usuario.class)
+                            "SELECT u FROM Usuario u LEFT JOIN FETCH u.cargo ORDER BY u.nome",
+                            Usuario.class)
                     .getResultList();
         } finally {
             em.close();
@@ -131,7 +132,7 @@ public class UsuarioRepository {
         EntityManager em = JpaUtil.getEntityManager();
         try {
             return em.createQuery(
-                            "SELECT u FROM Usuario u WHERE u.perfil = :perfil ORDER BY u.nome",
+                            "SELECT u FROM Usuario u LEFT JOIN FETCH u.cargo WHERE u.perfil = :perfil ORDER BY u.nome",
                             Usuario.class)
                     .setParameter("perfil", perfil)
                     .getResultList();

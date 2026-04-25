@@ -57,7 +57,8 @@ public class ProjetoRepository {
         EntityManager em = JpaUtil.getEntityManager();
         try {
             return em.createQuery(
-                            "SELECT p FROM Projeto p ORDER BY p.nome", Projeto.class)
+                            "SELECT p FROM Projeto p LEFT JOIN FETCH p.gerente ORDER BY p.nome",
+                            Projeto.class)
                     .getResultList();
         } finally {
             em.close();
@@ -74,7 +75,7 @@ public class ProjetoRepository {
         EntityManager em = JpaUtil.getEntityManager();
         try {
             return em.createQuery(
-                            "SELECT p FROM Projeto p WHERE p.status = :status ORDER BY p.nome",
+                            "SELECT p FROM Projeto p LEFT JOIN FETCH p.gerente WHERE p.status = :status ORDER BY p.nome",
                             Projeto.class)
                     .setParameter("status", status)
                     .getResultList();

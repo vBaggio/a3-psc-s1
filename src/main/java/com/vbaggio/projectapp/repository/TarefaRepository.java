@@ -74,7 +74,7 @@ public class TarefaRepository {
         EntityManager em = JpaUtil.getEntityManager();
         try {
             return em.createQuery(
-                            "SELECT t FROM Tarefa t WHERE t.projeto.id = :projetoId ORDER BY t.prazo ASC NULLS LAST, t.nome",
+                            "SELECT t FROM Tarefa t LEFT JOIN FETCH t.responsavel WHERE t.projeto.id = :projetoId ORDER BY t.prazo ASC NULLS LAST, t.nome",
                             Tarefa.class)
                     .setParameter("projetoId", projetoId)
                     .getResultList();
