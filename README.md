@@ -34,7 +34,7 @@ A arquitetura de software utiliza a **Composição de Objetos** para garantir um
 - **Versionamento de Banco de Dados:** Flyway
 - **Banco de Dados:** PostgreSQL
 - **Gerenciador de Dependências e Build:** Apache Maven
-- **Interface Gráfica (GUI):** Java Swing
+- **Interface Gráfica (GUI):** Java Swing + FlatLaf 3.4.1 (FlatDarkLaf)
 - **Padrão Arquitetural:** MVC (Model-View-Controller)
 - **Modelagem Visual:** Astah UML & Draw.io
 
@@ -48,8 +48,8 @@ O desenvolvimento arquitetural e o processo avaliativo do sistema iteram em proc
 | **Sprint 1** | 22/03 – 28/03/2026 | Modelagem & Arquitetura | ✅ Completo |
 | **Sprint 2** | 29/03 – 04/04/2026 | Banco de Dados & Camada de Modelo | ✅ Completo |
 | **Sprint 3** | 05/04 – 11/04/2026 | Repositórios & Controllers | ✅ Completo |
-| **Sprint 4** | 12/04 – 18/04/2026 | Refinamento do Backend & Entidade Tarefa | 🔄 Em andamento |
-| **Sprint 5** | a definir | Interface Gráfica (Swing) + FlatLaf | 🔜 Planejado |
+| **Sprint 4** | 12/04 – 18/04/2026 | Refinamento do Backend & Entidade Tarefa | ✅ Completo |
+| **Sprint 5** | 19/04 – 25/04/2026 | Interface Gráfica (Swing) + FlatLaf | ✅ Completo |
 | **Sprint 6** | a definir | Relatórios de Desempenho | 🔜 Planejado |
 
 ---
@@ -74,9 +74,10 @@ Complementação da camada de domínio com a entidade Tarefa, segurança no arma
 - 👉 [Sprint Backlog](docs/sprints/sprint-04/backlog.md)
 - 👉 [Relatório de Desenvolvimento](docs/sprints/sprint-04/relatorio.md)
 
-#### Sprint 5 — Interface Gráfica (Swing) + FlatLaf `a definir` 🔜
-Construção das telas (camada View) utilizando os componentes gráficos do Java Swing com FlatLaf como Look & Feel moderno. Integração dos formulários da interface com a camada Controller.
+#### Sprint 5 — Interface Gráfica (Swing) + FlatLaf `19/04 – 25/04/2026` ✅
+Construção da camada View completa com Java Swing e FlatLaf como Look & Feel moderno. Navegação por `CardLayout` (login ↔ dashboard) e `JTabbedPane` com painéis CRUD para todas as entidades do domínio. Integração total dos formulários com os controllers existentes.
 - 👉 [Sprint Backlog](docs/sprints/sprint-05/backlog.md)
+- 👉 [Relatório de Desenvolvimento](docs/sprints/sprint-05/relatorio.md)
 
 #### Sprint 6 — Relatórios de Desempenho `a definir` 🔜
 Implementação de relatórios e métricas de desempenho de projetos e equipes.
