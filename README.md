@@ -50,7 +50,7 @@ O desenvolvimento arquitetural e o processo avaliativo do sistema iteram em proc
 | **Sprint 3** | 05/04 – 11/04/2026 | Repositórios & Controllers | ✅ Completo |
 | **Sprint 4** | 12/04 – 18/04/2026 | Refinamento do Backend & Entidade Tarefa | ✅ Completo |
 | **Sprint 5** | 19/04 – 25/04/2026 | Interface Gráfica (Swing) + FlatLaf | ✅ Completo |
-| **Sprint 6** | a definir | Relatórios de Desempenho | 🔜 Planejado |
+| **Sprint 6** | 26/04 – 02/05/2026 | Relatórios de Desempenho | ✅ Completo |
 
 ---
 
@@ -79,8 +79,10 @@ Construção da camada View completa com Java Swing e FlatLaf como Look & Feel m
 - 👉 [Sprint Backlog](docs/sprints/sprint-05/backlog.md)
 - 👉 [Relatório de Desenvolvimento](docs/sprints/sprint-05/relatorio.md)
 
-#### Sprint 6 — Relatórios de Desempenho `a definir` 🔜
-Implementação de relatórios e métricas de desempenho de projetos e equipes.
+#### Sprint 6 — Relatórios de Desempenho `26/04 – 02/05/2026` ✅
+Implementação da camada de relatórios analíticos sem alterações no banco de dados. Criação do `RelatorioController` (stateless, somente leitura) com agregação de métricas de projetos e membros. DTOs imutáveis (`ResumoProjeto`, `CargaUsuario`) como contrato entre Controller e View. `RelatorioPanel` com três abas: Resumo Global (cards por status), Desempenho por Projeto (métricas de tarefas e prazo) e Carga de Trabalho (distribuição de tarefas por membro).
+- 👉 [Sprint Backlog](docs/sprints/sprint-06/backlog.md)
+- 👉 [Relatório de Desenvolvimento](docs/sprints/sprint-06/relatorio.md)
 
 ## 🚀 Como Executar Localmente
 

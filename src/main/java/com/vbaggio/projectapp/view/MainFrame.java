@@ -81,8 +81,10 @@ public class MainFrame extends JFrame {
         bar.add(mCadastros);
 
         JMenu mOperacoes = new JMenu("Operações");
-        item(mOperacoes, "Projetos", () -> abrirTela("projetos", "Projetos", ProjetoPanel::new, new Dimension(820, 520)));
-        item(mOperacoes, "Tarefas",  () -> abrirTela("tarefas",  "Tarefas",  TarefaPanel::new,  new Dimension(820, 520)));
+        item(mOperacoes, "Projetos",   () -> abrirTela("projetos",   "Projetos",              ProjetoPanel::new,   new Dimension(820, 520)));
+        item(mOperacoes, "Tarefas",    () -> abrirTela("tarefas",    "Tarefas",               TarefaPanel::new,    new Dimension(820, 520)));
+        mOperacoes.addSeparator();
+        item(mOperacoes, "Relatórios", () -> abrirTela("relatorios", "Relatórios de Desempenho", RelatorioPanel::new, new Dimension(860, 540)));
         bar.add(mOperacoes);
 
         bar.add(Box.createHorizontalGlue());
