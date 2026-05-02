@@ -2,8 +2,8 @@ package com.vbaggio.projectapp.view;
 
 import com.vbaggio.projectapp.controller.RelatorioController;
 import com.vbaggio.projectapp.dto.CargaUsuario;
+import com.vbaggio.projectapp.dto.ProjetoOpcao;
 import com.vbaggio.projectapp.dto.ResumoProjeto;
-import com.vbaggio.projectapp.model.entity.Projeto;
 import com.vbaggio.projectapp.model.enums.StatusProjeto;
 
 import javax.swing.*;
@@ -92,7 +92,7 @@ public class RelatorioPanel extends JPanel {
         JPanel painel = new JPanel(new BorderLayout(8, 8));
         painel.setBorder(BorderFactory.createEmptyBorder(12, 16, 16, 16));
 
-        JComboBox<ProjetoItem> cbProjeto = new JComboBox<>();
+        JComboBox<ProjetoOpcao> cbProjeto = new JComboBox<>();
         JButton btnCarregar = new JButton("Carregar");
         JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.LEFT));
         toolbar.add(new JLabel("Projeto:"));
@@ -112,8 +112,8 @@ public class RelatorioPanel extends JPanel {
         Runnable popularComboProjetos = () -> {
             cbProjeto.removeAllItems();
             try {
-                for (Projeto p : ctrl.listarProjetos()) {
-                    cbProjeto.addItem(new ProjetoItem(p));
+                for (ProjetoOpcao p : ctrl.listarProjetosParaCombo()) {
+                    cbProjeto.addItem(p);
                 }
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(painel, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
@@ -121,10 +121,10 @@ public class RelatorioPanel extends JPanel {
         };
 
         btnCarregar.addActionListener(e -> {
-            ProjetoItem selecionado = (ProjetoItem) cbProjeto.getSelectedItem();
+            ProjetoOpcao selecionado = (ProjetoOpcao) cbProjeto.getSelectedItem();
             if (selecionado == null) return;
             try {
-                ResumoProjeto r = ctrl.desempenhoPorProjeto(selecionado.id);
+                ResumoProjeto r = ctrl.desempenhoPorProjeto(selecionado.id());
                 model.setRowCount(0);
                 model.addRow(new Object[]{"Projeto",            r.nome()});
                 model.addRow(new Object[]{"Status",             r.status()});
@@ -195,19 +195,4 @@ public class RelatorioPanel extends JPanel {
         return painel;
     }
 
-    // ------------------------------------------------------------------
-    // Auxiliar interno
-    // ------------------------------------------------------------------
-
-    private static class ProjetoItem {
-        final java.util.UUID id;
-        final String nome;
-
-        ProjetoItem(Projeto p) {
-            this.id   = p.getId();
-            this.nome = p.getNome();
-        }
-
-        @Override public String toString() { return nome; }
-    }
 }

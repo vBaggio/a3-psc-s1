@@ -1,6 +1,7 @@
 package com.vbaggio.projectapp.controller;
 
 import com.vbaggio.projectapp.dto.CargaUsuario;
+import com.vbaggio.projectapp.dto.ProjetoOpcao;
 import com.vbaggio.projectapp.dto.ResumoProjeto;
 import com.vbaggio.projectapp.model.entity.Projeto;
 import com.vbaggio.projectapp.model.entity.Tarefa;
@@ -133,8 +134,10 @@ public class RelatorioController {
         return resultado;
     }
 
-    /** Lista todos os projetos — usado para popular combos na view. */
-    public List<Projeto> listarProjetos() {
-        return projetoRepo.listarTodos();
+    /** Lista projetos como DTOs leves para popular combos na view. */
+    public List<ProjetoOpcao> listarProjetosParaCombo() {
+        return projetoRepo.listarTodos().stream()
+                .map(p -> new ProjetoOpcao(p.getId(), p.getNome()))
+                .toList();
     }
 }
