@@ -13,7 +13,6 @@ import com.vbaggio.projectapp.repository.TarefaRepository;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -36,16 +35,7 @@ public class RelatorioController {
      * Retorna a contagem de projetos agrupada por status.
      */
     public Map<StatusProjeto, Long> resumoGlobal() {
-        List<Projeto> projetos = projetoRepo.listarTodos();
-
-        Map<StatusProjeto, Long> resultado = new EnumMap<>(StatusProjeto.class);
-        for (StatusProjeto s : StatusProjeto.values()) {
-            resultado.put(s, 0L);
-        }
-        for (Projeto p : projetos) {
-            resultado.merge(p.getStatus(), 1L, Long::sum);
-        }
-        return resultado;
+        return projetoRepo.contarPorStatus();
     }
 
     /**
