@@ -53,9 +53,9 @@ public class ResumoProjeto {
         return (int) Math.round((tarefasConcluidas * 100.0) / base);
     }
 
-    /** true se o projeto encerrou ou vai encerrar após a data prevista. */
+    /** true se o projeto encerrou ou vai encerrar após a data prevista (exceto cancelados). */
     public boolean isAtrasado() {
-        if (dataPrevisao == null) return false;
+        if (dataPrevisao == null || status == StatusProjeto.CANCELADO) return false;
         LocalDate referencia = (dataFim != null) ? dataFim : LocalDate.now();
         return referencia.isAfter(dataPrevisao);
     }
