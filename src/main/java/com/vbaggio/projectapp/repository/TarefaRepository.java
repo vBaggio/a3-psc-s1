@@ -163,4 +163,21 @@ public class TarefaRepository {
             em.close();
         }
     }
+
+    /**
+     * Retorna todas as tarefas que possuem responsável, com JOIN FETCH do responsável.
+     * Usado para cálculo de carga de trabalho em memória (evita N+1).
+     */
+    public List<Tarefa> listarComResponsavel() {
+        EntityManager em = JpaUtil.getEntityManager();
+        try {
+            return em.createQuery(
+                            "SELECT t FROM Tarefa t LEFT JOIN FETCH t.responsavel " +
+                            "WHERE t.responsavel IS NOT NULL ORDER BY t.responsavel.nome, t.prazo ASC NULLS LAST",
+                            Tarefa.class)
+                    .getResultList();
+        } finally {
+            em.close();
+        }
+    }
 }
