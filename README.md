@@ -80,7 +80,7 @@ Construção da camada View completa com Java Swing e FlatLaf como Look & Feel m
 - 👉 [Relatório de Desenvolvimento](docs/sprints/sprint-05/relatorio.md)
 
 #### Sprint 6 — Relatórios de Desempenho `26/04 – 02/05/2026` ✅
-Implementação da camada de relatórios analíticos sem alterações no banco de dados. Criação do `RelatorioController` (stateless, somente leitura) com agregação de métricas de projetos e membros. DTOs imutáveis (`ResumoProjeto`, `CargaUsuario`) como contrato entre Controller e View. `RelatorioPanel` com três abas: Resumo Global (cards por status), Desempenho por Projeto (métricas de tarefas e prazo) e Carga de Trabalho (distribuição de tarefas por membro).
+Implementação da camada de relatórios analíticos sem alterações no banco de dados. Criação do `RelatorioController` (stateless, somente leitura) com agregação de métricas de projetos e membros. DTOs imutáveis como **Java records** (`ResumoProjeto`, `CargaUsuario`, `ProjetoOpcao`) como contrato entre Controller e View. `RelatorioPanel` com três abas usando `SwingWorker` para não bloquear a EDT: Resumo Global (cards por status via JPQL `GROUP BY`), Desempenho por Projeto (métricas de tarefas e prazo) e Carga de Trabalho (distribuição por membro via single query + agrupamento em memória, eliminando N+1). Revisão arquitetural pós-entrega corrigiu 10 pontos de melhoria (bugs, performance, EDT safety, entity leakage e qualidade de código).
 - 👉 [Sprint Backlog](docs/sprints/sprint-06/backlog.md)
 - 👉 [Relatório de Desenvolvimento](docs/sprints/sprint-06/relatorio.md)
 
