@@ -106,6 +106,7 @@ public class RelatorioController {
             int pendentes   = 0;
             int emAndamento = 0;
             int concluidas  = 0;
+            int canceladas  = 0;
             int vencidas    = 0;
 
             for (Tarefa t : tarefas) {
@@ -113,7 +114,7 @@ public class RelatorioController {
                     case PENDENTE     -> pendentes++;
                     case EM_ANDAMENTO -> emAndamento++;
                     case CONCLUIDA    -> concluidas++;
-                    default -> { }
+                    case CANCELADA    -> canceladas++;
                 }
                 if (t.getPrazo() != null
                         && t.getPrazo().isBefore(hoje)
@@ -126,7 +127,7 @@ public class RelatorioController {
             resultado.add(new CargaUsuario(
                     u.getNome(),
                     u.getPerfil().toString(),
-                    pendentes, emAndamento, concluidas, vencidas
+                    pendentes, emAndamento, concluidas, canceladas, vencidas
             ));
         }
         return resultado;

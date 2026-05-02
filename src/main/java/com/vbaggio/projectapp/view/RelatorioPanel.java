@@ -160,7 +160,7 @@ public class RelatorioPanel extends JPanel {
         toolbar.add(btnAtualizar);
         painel.add(toolbar, BorderLayout.NORTH);
 
-        String[] colunas = {"Membro", "Perfil", "Pendentes", "Em Andamento", "Concluídas", "Vencidas", "Total Ativas"};
+        String[] colunas = {"Membro", "Perfil", "Pendentes", "Em Andamento", "Concluídas", "Canceladas", "Vencidas", "Total Ativas"};
         DefaultTableModel model = new DefaultTableModel(colunas, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
@@ -174,12 +174,13 @@ public class RelatorioPanel extends JPanel {
                 model.setRowCount(0);
                 for (CargaUsuario c : carga) {
                     model.addRow(new Object[]{
-                            c.getNome(),
-                            c.getPerfil(),
-                            c.getTarefasPendentes(),
-                            c.getTarefasEmAndamento(),
-                            c.getTarefasConcluidas(),
-                            c.getTarefasVencidas(),
+                            c.nome(),
+                            c.perfil(),
+                            c.tarefasPendentes(),
+                            c.tarefasEmAndamento(),
+                            c.tarefasConcluidas(),
+                            c.tarefasCanceladas(),
+                            c.tarefasVencidas(),
                             c.getTotalAtivas()
                     });
                 }
