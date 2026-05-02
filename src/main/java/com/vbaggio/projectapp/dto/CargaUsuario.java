@@ -9,7 +9,7 @@ public record CargaUsuario(
         int tarefasCanceladas,
         int tarefasVencidas
 ) {
-    public int getTotalAtivas() {
+    public int totalAtivas() {
         return tarefasPendentes + tarefasEmAndamento;
     }
 }

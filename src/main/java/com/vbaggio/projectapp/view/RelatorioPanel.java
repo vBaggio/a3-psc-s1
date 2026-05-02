@@ -159,11 +159,11 @@ public class RelatorioPanel extends JPanel {
             }.execute();
         });
 
-        popularComboProjetos();
         return painel;
     }
 
     private void popularComboProjetos() {
+        if (cbProjeto == null) return;
         new SwingWorker<List<ProjetoOpcao>, Void>() {
             @Override
             protected List<ProjetoOpcao> doInBackground() {
@@ -220,7 +220,7 @@ public class RelatorioPanel extends JPanel {
                                     c.nome(), c.perfil(),
                                     c.tarefasPendentes(), c.tarefasEmAndamento(),
                                     c.tarefasConcluidas(), c.tarefasCanceladas(),
-                                    c.tarefasVencidas(), c.getTotalAtivas()
+                                    c.tarefasVencidas(), c.totalAtivas()
                             });
                         }
                     } catch (Exception ex) {

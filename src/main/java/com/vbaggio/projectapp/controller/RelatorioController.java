@@ -13,6 +13,7 @@ import com.vbaggio.projectapp.repository.TarefaRepository;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -87,7 +88,7 @@ public class RelatorioController {
         List<Tarefa> todas = tarefaRepo.listarComResponsavel();
         LocalDate hoje = LocalDate.now();
 
-        Map<UUID, List<Tarefa>> porUsuario = new java.util.LinkedHashMap<>();
+        Map<UUID, List<Tarefa>> porUsuario = new LinkedHashMap<>();
         for (Tarefa t : todas) {
             porUsuario.computeIfAbsent(t.getResponsavel().getId(), id -> new ArrayList<>()).add(t);
         }
