@@ -126,18 +126,18 @@ public class RelatorioPanel extends JPanel {
             try {
                 ResumoProjeto r = ctrl.desempenhoPorProjeto(selecionado.id);
                 model.setRowCount(0);
-                model.addRow(new Object[]{"Projeto",            r.getNome()});
-                model.addRow(new Object[]{"Status",             r.getStatus()});
-                model.addRow(new Object[]{"Data prevista",      r.getDataPrevisao() != null ? r.getDataPrevisao().toString() : "—"});
-                model.addRow(new Object[]{"Data de conclusão",  r.getDataFim()      != null ? r.getDataFim().toString()      : "—"});
+                model.addRow(new Object[]{"Projeto",            r.nome()});
+                model.addRow(new Object[]{"Status",             r.status()});
+                model.addRow(new Object[]{"Data prevista",      r.dataPrevisao() != null ? r.dataPrevisao().toString() : "—"});
+                model.addRow(new Object[]{"Data de conclusão",  r.dataFim()      != null ? r.dataFim().toString()      : "—"});
                 model.addRow(new Object[]{"Situação de prazo",  r.isAtrasado() ? "Atrasado" : "No prazo"});
-                model.addRow(new Object[]{"Total de tarefas",   r.getTotalTarefas()});
-                model.addRow(new Object[]{"Concluídas",         r.getTarefasConcluidas()});
-                model.addRow(new Object[]{"Em andamento",       r.getTarefasEmAndamento()});
-                model.addRow(new Object[]{"Pendentes",          r.getTarefasPendentes()});
-                model.addRow(new Object[]{"Canceladas",         r.getTarefasCanceladas()});
-                model.addRow(new Object[]{"Vencidas (abertas)", r.getTarefasVencidas()});
-                model.addRow(new Object[]{"% de conclusão",     r.getPercentualConclusao() + "%"});
+                model.addRow(new Object[]{"Total de tarefas",   r.totalTarefas()});
+                model.addRow(new Object[]{"Concluídas",         r.tarefasConcluidas()});
+                model.addRow(new Object[]{"Em andamento",       r.tarefasEmAndamento()});
+                model.addRow(new Object[]{"Pendentes",          r.tarefasPendentes()});
+                model.addRow(new Object[]{"Canceladas",         r.tarefasCanceladas()});
+                model.addRow(new Object[]{"Vencidas (abertas)", r.tarefasVencidas()});
+                model.addRow(new Object[]{"% de conclusão",     r.percentualConclusao() + "%"});
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(painel, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
             }
