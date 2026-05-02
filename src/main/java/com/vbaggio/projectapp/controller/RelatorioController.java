@@ -1,6 +1,7 @@
 package com.vbaggio.projectapp.controller;
 
 import com.vbaggio.projectapp.dto.CargaUsuario;
+import com.vbaggio.projectapp.dto.ProjetoOpcao;
 import com.vbaggio.projectapp.dto.ResumoProjeto;
 import com.vbaggio.projectapp.model.entity.Projeto;
 import com.vbaggio.projectapp.model.entity.Tarefa;
@@ -9,11 +10,10 @@ import com.vbaggio.projectapp.model.enums.StatusProjeto;
 import com.vbaggio.projectapp.model.enums.StatusTarefa;
 import com.vbaggio.projectapp.repository.ProjetoRepository;
 import com.vbaggio.projectapp.repository.TarefaRepository;
-import com.vbaggio.projectapp.repository.UsuarioRepository;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -24,30 +24,19 @@ import java.util.UUID;
  */
 public class RelatorioController {
 
-    private final ProjetoRepository  projetoRepo;
-    private final TarefaRepository   tarefaRepo;
-    private final UsuarioRepository  usuarioRepo;
+    private final ProjetoRepository projetoRepo;
+    private final TarefaRepository  tarefaRepo;
 
     public RelatorioController() {
         this.projetoRepo = new ProjetoRepository();
         this.tarefaRepo  = new TarefaRepository();
-        this.usuarioRepo = new UsuarioRepository();
     }
 
     /**
      * Retorna a contagem de projetos agrupada por status.
      */
     public Map<StatusProjeto, Long> resumoGlobal() {
-        List<Projeto> projetos = projetoRepo.listarTodos();
-
-        Map<StatusProjeto, Long> resultado = new EnumMap<>(StatusProjeto.class);
-        for (StatusProjeto s : StatusProjeto.values()) {
-            resultado.put(s, 0L);
-        }
-        for (Projeto p : projetos) {
-            resultado.merge(p.getStatus(), 1L, Long::sum);
-        }
-        return resultado;
+        return projetoRepo.contarPorStatus();
     }
 
     /**
@@ -93,27 +82,28 @@ public class RelatorioController {
 
     /**
      * Retorna a carga de trabalho de todos os usuários que possuem tarefas atribuídas.
+     * Executa 1 query (em vez de N) agrupando em memória por responsável.
      */
     public List<CargaUsuario> cargaDeTrabalho() {
-        List<Usuario> usuarios = usuarioRepo.listarTodos();
+        List<Tarefa> todas = tarefaRepo.listarComResponsavel();
         LocalDate hoje = LocalDate.now();
 
-        List<CargaUsuario> resultado = new ArrayList<>();
-        for (Usuario u : usuarios) {
-            List<Tarefa> tarefas = tarefaRepo.listarPorResponsavel(u.getId());
-            if (tarefas.isEmpty()) continue;
+        Map<UUID, List<Tarefa>> porUsuario = new LinkedHashMap<>();
+        for (Tarefa t : todas) {
+            porUsuario.computeIfAbsent(t.getResponsavel().getId(), id -> new ArrayList<>()).add(t);
+        }
 
-            int pendentes   = 0;
-            int emAndamento = 0;
-            int concluidas  = 0;
-            int vencidas    = 0;
+        List<CargaUsuario> resultado = new ArrayList<>();
+        for (List<Tarefa> tarefas : porUsuario.values()) {
+            Usuario u = tarefas.get(0).getResponsavel();
+            int pendentes = 0, emAndamento = 0, concluidas = 0, canceladas = 0, vencidas = 0;
 
             for (Tarefa t : tarefas) {
                 switch (t.getStatus()) {
                     case PENDENTE     -> pendentes++;
                     case EM_ANDAMENTO -> emAndamento++;
                     case CONCLUIDA    -> concluidas++;
-                    default -> { }
+                    case CANCELADA    -> canceladas++;
                 }
                 if (t.getPrazo() != null
                         && t.getPrazo().isBefore(hoje)
@@ -122,18 +112,17 @@ public class RelatorioController {
                     vencidas++;
                 }
             }
-
             resultado.add(new CargaUsuario(
-                    u.getNome(),
-                    u.getPerfil().toString(),
-                    pendentes, emAndamento, concluidas, vencidas
-            ));
+                    u.getNome(), u.getPerfil().toString(),
+                    pendentes, emAndamento, concluidas, canceladas, vencidas));
         }
         return resultado;
     }
 
-    /** Lista todos os projetos — usado para popular combos na view. */
-    public List<Projeto> listarProjetos() {
-        return projetoRepo.listarTodos();
+    /** Lista projetos como DTOs leves para popular combos na view. */
+    public List<ProjetoOpcao> listarProjetosParaCombo() {
+        return projetoRepo.listarTodos().stream()
+                .map(p -> new ProjetoOpcao(p.getId(), p.getNome()))
+                .toList();
     }
 }

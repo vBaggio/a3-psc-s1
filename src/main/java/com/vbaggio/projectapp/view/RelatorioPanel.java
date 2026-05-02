@@ -2,8 +2,8 @@ package com.vbaggio.projectapp.view;
 
 import com.vbaggio.projectapp.controller.RelatorioController;
 import com.vbaggio.projectapp.dto.CargaUsuario;
+import com.vbaggio.projectapp.dto.ProjetoOpcao;
 import com.vbaggio.projectapp.dto.ResumoProjeto;
-import com.vbaggio.projectapp.model.entity.Projeto;
 import com.vbaggio.projectapp.model.enums.StatusProjeto;
 
 import javax.swing.*;
@@ -15,14 +15,21 @@ import java.util.Map;
 public class RelatorioPanel extends JPanel {
 
     private final RelatorioController ctrl = new RelatorioController();
+    private JComboBox<ProjetoOpcao> cbProjeto;
 
     public RelatorioPanel() {
         setLayout(new BorderLayout());
         JTabbedPane tabs = new JTabbedPane();
-        tabs.addTab("Resumo Global",       buildResumoGlobalTab());
+        tabs.addTab("Resumo Global",          buildResumoGlobalTab());
         tabs.addTab("Desempenho por Projeto", buildDesempenhoTab());
-        tabs.addTab("Carga de Trabalho",   buildCargaTab());
+        tabs.addTab("Carga de Trabalho",      buildCargaTab());
         add(tabs, BorderLayout.CENTER);
+
+        tabs.addChangeListener(e -> {
+            if (tabs.getSelectedIndex() == 1) {
+                popularComboProjetos();
+            }
+        });
     }
 
     // ------------------------------------------------------------------
@@ -48,18 +55,27 @@ public class RelatorioPanel extends JPanel {
     }
 
     private void carregarResumoGlobal(JPanel cards) {
-        try {
-            Map<StatusProjeto, Long> resumo = ctrl.resumoGlobal();
-            cards.removeAll();
-            cards.add(criarCard("Planejados",   String.valueOf(resumo.get(StatusProjeto.PLANEJADO)),    new Color(70, 130, 180)));
-            cards.add(criarCard("Em Andamento", String.valueOf(resumo.get(StatusProjeto.EM_ANDAMENTO)), new Color(60, 160, 80)));
-            cards.add(criarCard("Concluídos",   String.valueOf(resumo.get(StatusProjeto.CONCLUIDO)),    new Color(100, 100, 100)));
-            cards.add(criarCard("Cancelados",   String.valueOf(resumo.get(StatusProjeto.CANCELADO)),    new Color(190, 60, 60)));
-            cards.revalidate();
-            cards.repaint();
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
-        }
+        new SwingWorker<Map<StatusProjeto, Long>, Void>() {
+            @Override
+            protected Map<StatusProjeto, Long> doInBackground() {
+                return ctrl.resumoGlobal();
+            }
+            @Override
+            protected void done() {
+                try {
+                    Map<StatusProjeto, Long> resumo = get();
+                    cards.removeAll();
+                    cards.add(criarCard("Planejados",   String.valueOf(resumo.get(StatusProjeto.PLANEJADO)),    new Color(70, 130, 180)));
+                    cards.add(criarCard("Em Andamento", String.valueOf(resumo.get(StatusProjeto.EM_ANDAMENTO)), new Color(60, 160, 80)));
+                    cards.add(criarCard("Concluídos",   String.valueOf(resumo.get(StatusProjeto.CONCLUIDO)),    new Color(100, 100, 100)));
+                    cards.add(criarCard("Cancelados",   String.valueOf(resumo.get(StatusProjeto.CANCELADO)),    new Color(190, 60, 60)));
+                    cards.revalidate();
+                    cards.repaint();
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(RelatorioPanel.this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }.execute();
     }
 
     private JPanel criarCard(String titulo, String valor, Color cor) {
@@ -92,7 +108,7 @@ public class RelatorioPanel extends JPanel {
         JPanel painel = new JPanel(new BorderLayout(8, 8));
         painel.setBorder(BorderFactory.createEmptyBorder(12, 16, 16, 16));
 
-        JComboBox<ProjetoItem> cbProjeto = new JComboBox<>();
+        cbProjeto = new JComboBox<>();
         JButton btnCarregar = new JButton("Carregar");
         JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.LEFT));
         toolbar.add(new JLabel("Projeto:"));
@@ -109,42 +125,60 @@ public class RelatorioPanel extends JPanel {
         tabela.getColumnModel().getColumn(1).setPreferredWidth(180);
         painel.add(new JScrollPane(tabela), BorderLayout.CENTER);
 
-        Runnable popularComboProjetos = () -> {
-            cbProjeto.removeAllItems();
-            try {
-                for (Projeto p : ctrl.listarProjetos()) {
-                    cbProjeto.addItem(new ProjetoItem(p));
-                }
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(painel, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
-            }
-        };
-
         btnCarregar.addActionListener(e -> {
-            ProjetoItem selecionado = (ProjetoItem) cbProjeto.getSelectedItem();
+            ProjetoOpcao selecionado = (ProjetoOpcao) cbProjeto.getSelectedItem();
             if (selecionado == null) return;
-            try {
-                ResumoProjeto r = ctrl.desempenhoPorProjeto(selecionado.id);
-                model.setRowCount(0);
-                model.addRow(new Object[]{"Projeto",            r.getNome()});
-                model.addRow(new Object[]{"Status",             r.getStatus()});
-                model.addRow(new Object[]{"Data prevista",      r.getDataPrevisao() != null ? r.getDataPrevisao().toString() : "—"});
-                model.addRow(new Object[]{"Data de conclusão",  r.getDataFim()      != null ? r.getDataFim().toString()      : "—"});
-                model.addRow(new Object[]{"Situação de prazo",  r.isAtrasado() ? "Atrasado" : "No prazo"});
-                model.addRow(new Object[]{"Total de tarefas",   r.getTotalTarefas()});
-                model.addRow(new Object[]{"Concluídas",         r.getTarefasConcluidas()});
-                model.addRow(new Object[]{"Em andamento",       r.getTarefasEmAndamento()});
-                model.addRow(new Object[]{"Pendentes",          r.getTarefasPendentes()});
-                model.addRow(new Object[]{"Canceladas",         r.getTarefasCanceladas()});
-                model.addRow(new Object[]{"Vencidas (abertas)", r.getTarefasVencidas()});
-                model.addRow(new Object[]{"% de conclusão",     r.getPercentualConclusao() + "%"});
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(painel, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
-            }
+            btnCarregar.setEnabled(false);
+            new SwingWorker<ResumoProjeto, Void>() {
+                @Override
+                protected ResumoProjeto doInBackground() {
+                    return ctrl.desempenhoPorProjeto(selecionado.id());
+                }
+                @Override
+                protected void done() {
+                    btnCarregar.setEnabled(true);
+                    try {
+                        ResumoProjeto r = get();
+                        model.setRowCount(0);
+                        model.addRow(new Object[]{"Projeto",            r.nome()});
+                        model.addRow(new Object[]{"Status",             r.status()});
+                        model.addRow(new Object[]{"Data prevista",      r.dataPrevisao() != null ? r.dataPrevisao().toString() : "—"});
+                        model.addRow(new Object[]{"Data de conclusão",  r.dataFim()      != null ? r.dataFim().toString()      : "—"});
+                        model.addRow(new Object[]{"Situação de prazo",  r.isAtrasado() ? "Atrasado" : "No prazo"});
+                        model.addRow(new Object[]{"Total de tarefas",   r.totalTarefas()});
+                        model.addRow(new Object[]{"Concluídas",         r.tarefasConcluidas()});
+                        model.addRow(new Object[]{"Em andamento",       r.tarefasEmAndamento()});
+                        model.addRow(new Object[]{"Pendentes",          r.tarefasPendentes()});
+                        model.addRow(new Object[]{"Canceladas",         r.tarefasCanceladas()});
+                        model.addRow(new Object[]{"Vencidas (abertas)", r.tarefasVencidas()});
+                        model.addRow(new Object[]{"% de conclusão",     r.percentualConclusao() + "%"});
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(RelatorioPanel.this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }.execute();
         });
 
-        popularComboProjetos.run();
         return painel;
+    }
+
+    private void popularComboProjetos() {
+        if (cbProjeto == null) return;
+        new SwingWorker<List<ProjetoOpcao>, Void>() {
+            @Override
+            protected List<ProjetoOpcao> doInBackground() {
+                return ctrl.listarProjetosParaCombo();
+            }
+            @Override
+            protected void done() {
+                try {
+                    cbProjeto.removeAllItems();
+                    for (ProjetoOpcao p : get()) cbProjeto.addItem(p);
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(RelatorioPanel.this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }.execute();
     }
 
     // ------------------------------------------------------------------
@@ -160,7 +194,7 @@ public class RelatorioPanel extends JPanel {
         toolbar.add(btnAtualizar);
         painel.add(toolbar, BorderLayout.NORTH);
 
-        String[] colunas = {"Membro", "Perfil", "Pendentes", "Em Andamento", "Concluídas", "Vencidas", "Total Ativas"};
+        String[] colunas = {"Membro", "Perfil", "Pendentes", "Em Andamento", "Concluídas", "Canceladas", "Vencidas", "Total Ativas"};
         DefaultTableModel model = new DefaultTableModel(colunas, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
@@ -169,44 +203,36 @@ public class RelatorioPanel extends JPanel {
         painel.add(new JScrollPane(tabela), BorderLayout.CENTER);
 
         Runnable carregar = () -> {
-            try {
-                List<CargaUsuario> carga = ctrl.cargaDeTrabalho();
-                model.setRowCount(0);
-                for (CargaUsuario c : carga) {
-                    model.addRow(new Object[]{
-                            c.getNome(),
-                            c.getPerfil(),
-                            c.getTarefasPendentes(),
-                            c.getTarefasEmAndamento(),
-                            c.getTarefasConcluidas(),
-                            c.getTarefasVencidas(),
-                            c.getTotalAtivas()
-                    });
+            btnAtualizar.setEnabled(false);
+            new SwingWorker<List<CargaUsuario>, Void>() {
+                @Override
+                protected List<CargaUsuario> doInBackground() {
+                    return ctrl.cargaDeTrabalho();
                 }
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(painel, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
-            }
+                @Override
+                protected void done() {
+                    btnAtualizar.setEnabled(true);
+                    try {
+                        List<CargaUsuario> carga = get();
+                        model.setRowCount(0);
+                        for (CargaUsuario c : carga) {
+                            model.addRow(new Object[]{
+                                    c.nome(), c.perfil(),
+                                    c.tarefasPendentes(), c.tarefasEmAndamento(),
+                                    c.tarefasConcluidas(), c.tarefasCanceladas(),
+                                    c.tarefasVencidas(), c.totalAtivas()
+                            });
+                        }
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(RelatorioPanel.this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }.execute();
         };
 
         btnAtualizar.addActionListener(e -> carregar.run());
         carregar.run();
 
         return painel;
-    }
-
-    // ------------------------------------------------------------------
-    // Auxiliar interno
-    // ------------------------------------------------------------------
-
-    private static class ProjetoItem {
-        final java.util.UUID id;
-        final String nome;
-
-        ProjetoItem(Projeto p) {
-            this.id   = p.getId();
-            this.nome = p.getNome();
-        }
-
-        @Override public String toString() { return nome; }
     }
 }

@@ -5,7 +5,9 @@ import com.vbaggio.projectapp.model.entity.Projeto;
 import com.vbaggio.projectapp.model.enums.StatusProjeto;
 import jakarta.persistence.EntityManager;
 
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -141,6 +143,27 @@ public class ProjetoRepository {
         } catch (Exception e) {
             em.getTransaction().rollback();
             throw e;
+        } finally {
+            em.close();
+        }
+    }
+
+    /**
+     * Retorna a contagem de projetos agrupada por status sem hidratar entidades completas.
+     */
+    @SuppressWarnings("unchecked")
+    public Map<StatusProjeto, Long> contarPorStatus() {
+        EntityManager em = JpaUtil.getEntityManager();
+        try {
+            List<Object[]> linhas = em.createQuery(
+                            "SELECT p.status, COUNT(p) FROM Projeto p GROUP BY p.status")
+                    .getResultList();
+            Map<StatusProjeto, Long> resultado = new EnumMap<>(StatusProjeto.class);
+            for (StatusProjeto s : StatusProjeto.values()) resultado.put(s, 0L);
+            for (Object[] linha : linhas) {
+                resultado.put((StatusProjeto) linha[0], (Long) linha[1]);
+            }
+            return resultado;
         } finally {
             em.close();
         }
