@@ -91,38 +91,37 @@ public class UsuarioPanel extends JPanel {
         form.add(new JLabel("Perfil:"));       form.add(comboPerfil);
         form.add(new JLabel("Cargo:"));        form.add(comboCargo);
 
-        int op = JOptionPane.showConfirmDialog(this, form,
-                edicao ? "Editar Usuário" : "Novo Usuário",
-                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-        if (op != JOptionPane.OK_OPTION) return;
+        UUID cargoSel;
+        String senha;
 
-        UUID cargoSel = idCargos[comboCargo.getSelectedIndex()];
-        String senha  = new String(campSenha.getPassword());
+        while (true) {
+            int op = JOptionPane.showConfirmDialog(this, form,
+                    edicao ? "Editar Usuário" : "Novo Usuário",
+                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            if (op != JOptionPane.OK_OPTION) return;
 
-        try {
-            if (!edicao) {
-                ctrl.cadastrarUsuario(
-                        campNome.getText().trim(),
-                        campCpf.getText().trim(),
-                        campEmail.getText().trim(),
-                        campLogin.getText().trim(),
-                        senha,
-                        (Perfil) comboPerfil.getSelectedItem(),
-                        cargoSel);
-            } else {
-                ctrl.atualizarUsuario(
-                        usuario.getId(),
-                        campNome.getText().trim(),
-                        campCpf.getText().trim(),
-                        campEmail.getText().trim(),
-                        campLogin.getText().trim(),
-                        senha.isBlank() ? null : senha,
-                        (Perfil) comboPerfil.getSelectedItem(),
-                        cargoSel);
+            cargoSel = idCargos[comboCargo.getSelectedIndex()];
+            senha    = new String(campSenha.getPassword());
+
+            try {
+                if (!edicao) {
+                    ctrl.cadastrarUsuario(
+                            campNome.getText().trim(), campCpf.getText().trim(),
+                            campEmail.getText().trim(), campLogin.getText().trim(),
+                            senha, (Perfil) comboPerfil.getSelectedItem(), cargoSel);
+                } else {
+                    ctrl.atualizarUsuario(
+                            usuario.getId(),
+                            campNome.getText().trim(), campCpf.getText().trim(),
+                            campEmail.getText().trim(), campLogin.getText().trim(),
+                            senha.isBlank() ? null : senha,
+                            (Perfil) comboPerfil.getSelectedItem(), cargoSel);
+                }
+                carregar();
+                return;
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
             }
-            carregar();
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
         }
     }
 
