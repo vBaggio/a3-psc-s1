@@ -74,7 +74,7 @@ public class TarefaController {
 
         Tarefa tarefa = new Tarefa();
         tarefa.setNome(nome.trim());
-        tarefa.setDescricao(descricao);
+        tarefa.setDescricao(descricao == null || descricao.isBlank() ? null : descricao.trim());
         tarefa.setPrazo(prazo);
         tarefa.setProjeto(projeto);
         tarefa.setStatus(StatusTarefa.PENDENTE);
@@ -89,6 +89,16 @@ public class TarefaController {
         return tarefa;
     }
 
+    /**
+     * Atualiza nome, descrição e prazo de uma tarefa existente.
+     *
+     * @param id        UUID da tarefa
+     * @param nome      novo nome (obrigatório)
+     * @param descricao nova descrição (null ou em branco → armazenado como null)
+     * @param prazo     novo prazo (pode ser null)
+     * @throws IllegalArgumentException se nome for nulo ou em branco
+     * @throws IllegalStateException    se a tarefa estiver CONCLUIDA ou CANCELADA
+     */
     public void atualizarTarefa(UUID id, String nome, String descricao, LocalDate prazo) {
         if (nome == null || nome.isBlank()) {
             throw new IllegalArgumentException("Nome da tarefa é obrigatório.");
