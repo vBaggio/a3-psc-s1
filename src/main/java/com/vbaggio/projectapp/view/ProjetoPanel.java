@@ -7,6 +7,7 @@ import com.vbaggio.projectapp.model.entity.Usuario;
 import com.vbaggio.projectapp.model.enums.Perfil;
 import com.vbaggio.projectapp.model.enums.StatusProjeto;
 import com.vbaggio.projectapp.util.DateUtils;
+import com.vbaggio.projectapp.util.OpcaoItem;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -73,8 +74,10 @@ public class ProjetoPanel extends JPanel {
         campDesc.setLineWrap(true); campDesc.setWrapStyleWord(true);
         JFormattedTextField campInicio   = DateUtils.campData();
         JFormattedTextField campPrevisao = DateUtils.campData();
-        String[] nomes = gerentes.stream().map(Usuario::getNome).toArray(String[]::new);
-        JComboBox<String> comboGerente = new JComboBox<>(nomes);
+        OpcaoItem[] opcoesGerente = gerentes.stream()
+                .map(u -> new OpcaoItem(u.getId(), u.getNome()))
+                .toArray(OpcaoItem[]::new);
+        JComboBox<OpcaoItem> comboGerente = new JComboBox<>(opcoesGerente);
 
         JPanel form = montarForm(
                 "Nome:", campNome,
@@ -88,7 +91,7 @@ public class ProjetoPanel extends JPanel {
                     JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
             if (op != JOptionPane.OK_OPTION) return;
             try {
-                UUID gerenteId = gerentes.get(comboGerente.getSelectedIndex()).getId();
+                UUID gerenteId = ((OpcaoItem) comboGerente.getSelectedItem()).id();
                 ctrl.criarProjeto(campNome.getText().trim(), campDesc.getText().trim(),
                         DateUtils.parse(campInicio.getText()),
                         DateUtils.parse(campPrevisao.getText()),
@@ -122,11 +125,13 @@ public class ProjetoPanel extends JPanel {
         if (p.getDataInicio()   != null) campInicio.setText(DateUtils.format(p.getDataInicio()));
         if (p.getDataPrevisao() != null) campPrevisao.setText(DateUtils.format(p.getDataPrevisao()));
 
-        String[] nomes = gerentes.stream().map(Usuario::getNome).toArray(String[]::new);
-        JComboBox<String> comboGerente = new JComboBox<>(nomes);
+        OpcaoItem[] opcoesGerente = gerentes.stream()
+                .map(u -> new OpcaoItem(u.getId(), u.getNome()))
+                .toArray(OpcaoItem[]::new);
+        JComboBox<OpcaoItem> comboGerente = new JComboBox<>(opcoesGerente);
         if (p.getGerente() != null) {
-            for (int i = 0; i < gerentes.size(); i++) {
-                if (gerentes.get(i).getId().equals(p.getGerente().getId())) {
+            for (int i = 0; i < opcoesGerente.length; i++) {
+                if (opcoesGerente[i].id().equals(p.getGerente().getId())) {
                     comboGerente.setSelectedIndex(i); break;
                 }
             }
@@ -144,7 +149,7 @@ public class ProjetoPanel extends JPanel {
                     JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
             if (op != JOptionPane.OK_OPTION) return;
             try {
-                UUID gerenteId = gerentes.get(comboGerente.getSelectedIndex()).getId();
+                UUID gerenteId = ((OpcaoItem) comboGerente.getSelectedItem()).id();
                 ctrl.atualizarProjeto(id, campNome.getText().trim(), campDesc.getText().trim(),
                         DateUtils.parse(campInicio.getText()),
                         DateUtils.parse(campPrevisao.getText()),

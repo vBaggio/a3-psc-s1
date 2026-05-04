@@ -5,6 +5,7 @@ import com.vbaggio.projectapp.controller.UsuarioController;
 import com.vbaggio.projectapp.model.entity.Cargo;
 import com.vbaggio.projectapp.model.entity.Usuario;
 import com.vbaggio.projectapp.model.enums.Perfil;
+import com.vbaggio.projectapp.util.OpcaoItem;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -74,19 +75,16 @@ public class UsuarioPanel extends JPanel {
         if (edicao) comboPerfil.setSelectedItem(usuario.getPerfil());
 
         List<Cargo> cargos = cargoCtrl.listarCargos();
-        String[] nomeCargos = new String[cargos.size() + 1];
-        UUID[]   idCargos   = new UUID[cargos.size() + 1];
-        nomeCargos[0] = "(sem cargo)"; idCargos[0] = null;
+        OpcaoItem[] opcoesCargo = new OpcaoItem[cargos.size() + 1];
+        opcoesCargo[0] = new OpcaoItem(null, "(sem cargo)");
         for (int i = 0; i < cargos.size(); i++) {
-            nomeCargos[i + 1] = cargos.get(i).getNome();
-            idCargos[i + 1]   = cargos.get(i).getId();
+            opcoesCargo[i + 1] = new OpcaoItem(cargos.get(i).getId(), cargos.get(i).getNome());
         }
-        JComboBox<String> comboCargo = new JComboBox<>(nomeCargos);
+        JComboBox<OpcaoItem> comboCargo = new JComboBox<>(opcoesCargo);
         if (edicao && usuario.getCargo() != null) {
-            for (int i = 0; i < idCargos.length; i++) {
-                if (usuario.getCargo().getId().equals(idCargos[i])) {
-                    comboCargo.setSelectedIndex(i);
-                    break;
+            for (int i = 0; i < opcoesCargo.length; i++) {
+                if (usuario.getCargo().getId().equals(opcoesCargo[i].id())) {
+                    comboCargo.setSelectedIndex(i); break;
                 }
             }
         }
@@ -110,7 +108,7 @@ public class UsuarioPanel extends JPanel {
                     JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
             if (op != JOptionPane.OK_OPTION) return;
 
-            cargoSel = idCargos[comboCargo.getSelectedIndex()];
+            cargoSel = ((OpcaoItem) comboCargo.getSelectedItem()).id();
             senha    = new String(campSenha.getPassword());
 
             try {

@@ -8,11 +8,11 @@ import com.vbaggio.projectapp.model.entity.Tarefa;
 import com.vbaggio.projectapp.model.entity.Usuario;
 import com.vbaggio.projectapp.model.enums.StatusTarefa;
 import com.vbaggio.projectapp.util.DateUtils;
+import com.vbaggio.projectapp.util.OpcaoItem;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,8 +28,7 @@ public class TarefaPanel extends JPanel {
     };
     private final JTable tabela = new JTable(modelo);
 
-    private final JComboBox<String> comboProjeto = new JComboBox<>();
-    private List<Projeto> listaProjetos;
+    private final JComboBox<OpcaoItem> comboProjeto = new JComboBox<>();
 
     public TarefaPanel() {
         setLayout(new BorderLayout(0, 4));
@@ -78,11 +77,12 @@ public class TarefaPanel extends JPanel {
     }
 
     private void abrirFormulario() {
-        if (comboProjeto.getSelectedIndex() < 0 || listaProjetos == null || listaProjetos.isEmpty()) {
+        OpcaoItem projetoSel = (OpcaoItem) comboProjeto.getSelectedItem();
+        if (projetoSel == null) {
             JOptionPane.showMessageDialog(this, "Selecione um projeto primeiro.");
             return;
         }
-        UUID projetoId = listaProjetos.get(comboProjeto.getSelectedIndex()).getId();
+        UUID projetoId = projetoSel.id();
 
         JTextField campNome = new JTextField(24);
         JTextArea  campDesc = new JTextArea(3, 24);
@@ -90,14 +90,14 @@ public class TarefaPanel extends JPanel {
         JFormattedTextField campPrazo = DateUtils.campData();
 
         List<Usuario> usuarios = usuarioCtrl.listarUsuarios();
-        String[] nomesUsuarios = new String[usuarios.size() + 1];
-        UUID[]   idsUsuarios   = new UUID[usuarios.size() + 1];
-        nomesUsuarios[0] = "(sem responsável)"; idsUsuarios[0] = null;
+        OpcaoItem[] opcoesResp = new OpcaoItem[usuarios.size() + 1];
+        opcoesResp[0] = new OpcaoItem(null, "(sem responsável)");
         for (int i = 0; i < usuarios.size(); i++) {
-            nomesUsuarios[i + 1] = usuarios.get(i).getNome() + " [" + usuarios.get(i).getLogin() + "]";
-            idsUsuarios[i + 1]   = usuarios.get(i).getId();
+            opcoesResp[i + 1] = new OpcaoItem(
+                    usuarios.get(i).getId(),
+                    usuarios.get(i).getNome() + " [" + usuarios.get(i).getLogin() + "]");
         }
-        JComboBox<String> comboResp = new JComboBox<>(nomesUsuarios);
+        JComboBox<OpcaoItem> comboResp = new JComboBox<>(opcoesResp);
 
         JPanel form = montarForm(
                 "Nome:", campNome,
@@ -112,7 +112,7 @@ public class TarefaPanel extends JPanel {
             try {
                 ctrl.criarTarefa(campNome.getText().trim(), campDesc.getText().trim(),
                         DateUtils.parse(campPrazo.getText()),
-                        projetoId, idsUsuarios[comboResp.getSelectedIndex()]);
+                        projetoId, ((OpcaoItem) comboResp.getSelectedItem()).id());
                 carregarTarefas();
                 return;
             } catch (Exception ex) {
@@ -177,20 +177,19 @@ public class TarefaPanel extends JPanel {
         UUID id = UUID.fromString((String) modelo.getValueAt(linha, 0));
 
         List<Usuario> usuarios = usuarioCtrl.listarUsuarios();
-        String[] nomes = new String[usuarios.size() + 1];
-        UUID[]   ids   = new UUID[usuarios.size() + 1];
-        nomes[0] = "(remover responsável)"; ids[0] = null;
+        OpcaoItem[] opcoesResp = new OpcaoItem[usuarios.size() + 1];
+        opcoesResp[0] = new OpcaoItem(null, "(remover responsável)");
         for (int i = 0; i < usuarios.size(); i++) {
-            nomes[i + 1] = usuarios.get(i).getNome() + " [" + usuarios.get(i).getLogin() + "]";
-            ids[i + 1]   = usuarios.get(i).getId();
+            opcoesResp[i + 1] = new OpcaoItem(
+                    usuarios.get(i).getId(),
+                    usuarios.get(i).getNome() + " [" + usuarios.get(i).getLogin() + "]");
         }
-        String escolha = (String) JOptionPane.showInputDialog(
+        OpcaoItem escolha = (OpcaoItem) JOptionPane.showInputDialog(
                 this, "Responsável:", "Reatribuir",
-                JOptionPane.PLAIN_MESSAGE, null, nomes, nomes[0]);
+                JOptionPane.PLAIN_MESSAGE, null, opcoesResp, opcoesResp[0]);
         if (escolha == null) return;
-        int idx = Arrays.asList(nomes).indexOf(escolha);
         try {
-            ctrl.reatribuirResponsavel(id, ids[idx]);
+            ctrl.reatribuirResponsavel(id, escolha.id());
             carregarTarefas();
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
@@ -214,20 +213,25 @@ public class TarefaPanel extends JPanel {
     }
 
     private void carregarComboProjeto() {
-        int selAnterior = comboProjeto.getSelectedIndex();
-        listaProjetos = projetoCtrl.listarProjetos();
+        OpcaoItem selAnterior = (OpcaoItem) comboProjeto.getSelectedItem();
+        UUID selId = selAnterior != null ? selAnterior.id() : null;
         comboProjeto.removeAllItems();
-        for (Projeto p : listaProjetos) {
-            comboProjeto.addItem(p.getNome() + " [" + p.getStatus() + "]");
+        for (Projeto p : projetoCtrl.listarProjetos()) {
+            comboProjeto.addItem(new OpcaoItem(p.getId(), p.getNome() + " [" + p.getStatus() + "]"));
         }
-        if (selAnterior >= 0 && selAnterior < comboProjeto.getItemCount()) {
-            comboProjeto.setSelectedIndex(selAnterior);
+        if (selId != null) {
+            for (int i = 0; i < comboProjeto.getItemCount(); i++) {
+                if (comboProjeto.getItemAt(i).id().equals(selId)) {
+                    comboProjeto.setSelectedIndex(i); break;
+                }
+            }
         }
     }
 
     private void carregarTarefas() {
-        if (comboProjeto.getSelectedIndex() < 0 || listaProjetos == null || listaProjetos.isEmpty()) return;
-        UUID projetoId = listaProjetos.get(comboProjeto.getSelectedIndex()).getId();
+        OpcaoItem projetoSel = (OpcaoItem) comboProjeto.getSelectedItem();
+        if (projetoSel == null) return;
+        UUID projetoId = projetoSel.id();
         modelo.setRowCount(0);
         for (Tarefa t : ctrl.listarPorProjeto(projetoId)) {
             modelo.addRow(new Object[]{
