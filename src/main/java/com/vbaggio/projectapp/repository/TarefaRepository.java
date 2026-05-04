@@ -57,7 +57,11 @@ public class TarefaRepository {
         EntityManager em = JpaUtil.getEntityManager();
         try {
             return em.createQuery(
-                            "SELECT t FROM Tarefa t ORDER BY t.nome", Tarefa.class)
+                    "SELECT DISTINCT t FROM Tarefa t " +
+                    "LEFT JOIN FETCH t.responsavel " +
+                    "LEFT JOIN FETCH t.projeto " +
+                    "ORDER BY t.nome",
+                    Tarefa.class)
                     .getResultList();
         } finally {
             em.close();
@@ -74,8 +78,12 @@ public class TarefaRepository {
         EntityManager em = JpaUtil.getEntityManager();
         try {
             return em.createQuery(
-                            "SELECT t FROM Tarefa t LEFT JOIN FETCH t.responsavel WHERE t.projeto.id = :projetoId ORDER BY t.prazo ASC NULLS LAST, t.nome",
-                            Tarefa.class)
+                    "SELECT t FROM Tarefa t " +
+                    "LEFT JOIN FETCH t.responsavel " +
+                    "LEFT JOIN FETCH t.projeto " +
+                    "WHERE t.projeto.id = :projetoId " +
+                    "ORDER BY t.prazo ASC NULLS LAST, t.nome",
+                    Tarefa.class)
                     .setParameter("projetoId", projetoId)
                     .getResultList();
         } finally {
@@ -93,8 +101,12 @@ public class TarefaRepository {
         EntityManager em = JpaUtil.getEntityManager();
         try {
             return em.createQuery(
-                            "SELECT t FROM Tarefa t WHERE t.responsavel.id = :usuarioId ORDER BY t.prazo ASC NULLS LAST",
-                            Tarefa.class)
+                    "SELECT t FROM Tarefa t " +
+                    "LEFT JOIN FETCH t.projeto " +
+                    "LEFT JOIN FETCH t.responsavel " +
+                    "WHERE t.responsavel.id = :usuarioId " +
+                    "ORDER BY t.prazo ASC NULLS LAST",
+                    Tarefa.class)
                     .setParameter("usuarioId", usuarioId)
                     .getResultList();
         } finally {
