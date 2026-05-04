@@ -101,8 +101,9 @@ public class ProjetoRepository {
         EntityManager em = JpaUtil.getEntityManager();
         try {
             return em.createQuery(
-                            "SELECT p FROM Projeto p WHERE p.gerente.id = :gerenteId ORDER BY p.nome",
-                            Projeto.class)
+                    "SELECT p FROM Projeto p LEFT JOIN FETCH p.gerente " +
+                    "WHERE p.gerente.id = :gerenteId ORDER BY p.nome",
+                    Projeto.class)
                     .setParameter("gerenteId", gerenteId)
                     .getResultList();
         } finally {
