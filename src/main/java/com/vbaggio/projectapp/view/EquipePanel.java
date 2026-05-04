@@ -94,25 +94,35 @@ public class EquipePanel extends JPanel {
         JTextField campNome = new JTextField(edicao ? equipe.getNome() : "", 20);
         JTextArea  campDesc = new JTextArea(
                 edicao && equipe.getDescricao() != null ? equipe.getDescricao() : "", 3, 20);
+        campDesc.setLineWrap(true); campDesc.setWrapStyleWord(true);
 
-        JPanel form = new JPanel(new GridLayout(0, 2, 6, 4));
-        form.add(new JLabel("Nome:"));      form.add(campNome);
-        form.add(new JLabel("Descrição:")); form.add(new JScrollPane(campDesc));
+        JPanel form = new JPanel(new GridBagLayout());
+        GridBagConstraints lbl = new GridBagConstraints();
+        lbl.anchor = GridBagConstraints.NORTHWEST; lbl.insets = new Insets(5, 0, 2, 8); lbl.gridx = 0;
+        GridBagConstraints fld = new GridBagConstraints();
+        fld.weightx = 1.0; fld.gridx = 1; fld.insets = new Insets(3, 0, 2, 0);
 
-        int op = JOptionPane.showConfirmDialog(this, form,
-                edicao ? "Editar Equipe" : "Nova Equipe",
-                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-        if (op != JOptionPane.OK_OPTION) return;
+        lbl.gridy = 0; fld.gridy = 0; fld.fill = GridBagConstraints.HORIZONTAL; fld.weighty = 0;
+        form.add(new JLabel("Nome:"), lbl); form.add(campNome, fld);
+        lbl.gridy = 1; fld.gridy = 1; fld.fill = GridBagConstraints.BOTH; fld.weighty = 0.5;
+        form.add(new JLabel("Descrição:"), lbl); form.add(new JScrollPane(campDesc), fld);
 
-        try {
-            if (!edicao) {
-                ctrl.criarEquipe(campNome.getText().trim(), campDesc.getText().trim());
-            } else {
-                ctrl.atualizarEquipe(equipe.getId(), campNome.getText().trim(), campDesc.getText().trim());
+        String titulo = edicao ? "Editar Equipe" : "Nova Equipe";
+        while (true) {
+            int op = JOptionPane.showConfirmDialog(this, form, titulo,
+                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            if (op != JOptionPane.OK_OPTION) return;
+            try {
+                if (!edicao) {
+                    ctrl.criarEquipe(campNome.getText().trim(), campDesc.getText().trim());
+                } else {
+                    ctrl.atualizarEquipe(equipe.getId(), campNome.getText().trim(), campDesc.getText().trim());
+                }
+                carregarEquipes();
+                return;
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
             }
-            carregarEquipes();
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
         }
     }
 
