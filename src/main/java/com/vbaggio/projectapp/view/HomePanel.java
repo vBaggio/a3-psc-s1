@@ -14,11 +14,12 @@ public class HomePanel extends JPanel {
     private final Usuario   usuario;
 
     private static final Color[] CORES_MODULO = {
-        new Color(66,  133, 244),   // Cargos   — azul
-        new Color(52,  168,  83),   // Usuários — verde
-        new Color(154,  95, 229),   // Equipes  — roxo
-        new Color(251, 140,   0),   // Projetos — laranja
-        new Color(234,  67,  53),   // Tarefas  — vermelho
+        new Color(66,  133, 244),   // Cargos      — azul
+        new Color(52,  168,  83),   // Usuários    — verde
+        new Color(154,  95, 229),   // Equipes     — roxo
+        new Color(251, 140,   0),   // Projetos    — laranja
+        new Color(234,  67,  53),   // Tarefas     — vermelho
+        new Color(96,  125, 139),   // Relatórios  — cinza-azulado
     };
 
     public HomePanel(MainFrame frame, Usuario usuario) {
@@ -77,8 +78,9 @@ public class HomePanel extends JPanel {
         row1.add(card(2, "E", "Equipes",  "Times e alocações",       "equipes",  "Equipes",  EquipePanel::new,  new Dimension(780, 520)));
 
         JPanel row2 = fileira();
-        row2.add(card(3, "P", "Projetos", "Ciclo de vida e status",  "projetos", "Projetos", ProjetoPanel::new, new Dimension(820, 520)));
-        row2.add(card(4, "T", "Tarefas",  "Acompanhamento e prazos", "tarefas",  "Tarefas",  TarefaPanel::new,  new Dimension(820, 520)));
+        row2.add(card(3, "P", "Projetos",   "Ciclo de vida e status",   "projetos",   "Projetos",                 ProjetoPanel::new,   new Dimension(820, 520)));
+        row2.add(card(4, "T", "Tarefas",    "Acompanhamento e prazos",  "tarefas",    "Tarefas",                  TarefaPanel::new,    new Dimension(820, 520)));
+        row2.add(card(5, "R", "Relatórios", "Desempenho e métricas",    "relatorios", "Relatórios de Desempenho", RelatorioPanel::new, new Dimension(860, 540)));
 
         inner.add(row1);
         inner.add(Box.createVerticalStrut(16));
