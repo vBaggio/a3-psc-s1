@@ -44,7 +44,12 @@ public class EquipeRepository {
     public Optional<Equipe> buscarPorId(UUID id) {
         EntityManager em = JpaUtil.getEntityManager();
         try {
-            return Optional.ofNullable(em.find(Equipe.class, id));
+            List<Equipe> result = em.createQuery(
+                    "SELECT e FROM Equipe e LEFT JOIN FETCH e.projetos WHERE e.id = :id",
+                    Equipe.class)
+                    .setParameter("id", id)
+                    .getResultList();
+            return result.isEmpty() ? Optional.empty() : Optional.of(result.get(0));
         } finally {
             em.close();
         }
@@ -60,6 +65,26 @@ public class EquipeRepository {
         try {
             return em.createQuery("SELECT e FROM Equipe e ORDER BY e.nome", Equipe.class)
                     .getResultList();
+        } finally {
+            em.close();
+        }
+    }
+
+    /**
+     * Verifica se já existe uma equipe com o nome fornecido (case-insensitive).
+     *
+     * @param nome nome a verificar
+     * @return true se já existe uma equipe com esse nome
+     */
+    public boolean existeComNome(String nome) {
+        EntityManager em = JpaUtil.getEntityManager();
+        try {
+            Long count = em.createQuery(
+                    "SELECT COUNT(e) FROM Equipe e WHERE LOWER(e.nome) = LOWER(:nome)",
+                    Long.class)
+                    .setParameter("nome", nome.trim())
+                    .getSingleResult();
+            return count > 0;
         } finally {
             em.close();
         }

@@ -38,9 +38,7 @@ public class EquipeController {
             throw new IllegalArgumentException("O nome da equipe é obrigatório.");
         }
 
-        boolean nomeEmUso = equipeRepo.listarTodos().stream()
-                .anyMatch(e -> e.getNome().equalsIgnoreCase(nome.trim()));
-        if (nomeEmUso) {
+        if (equipeRepo.existeComNome(nome)) {
             throw new IllegalArgumentException("Já existe uma equipe com o nome '" + nome + "'.");
         }
 
@@ -140,10 +138,14 @@ public class EquipeController {
         Equipe equipe = buscarPorId(id);
 
         if (novoNome != null && !novoNome.isBlank()) {
-            equipe.setNome(novoNome.trim());
+            String nomeTrimmed = novoNome.trim();
+            if (!nomeTrimmed.equalsIgnoreCase(equipe.getNome()) && equipeRepo.existeComNome(nomeTrimmed)) {
+                throw new IllegalArgumentException("Já existe uma equipe com o nome '" + nomeTrimmed + "'.");
+            }
+            equipe.setNome(nomeTrimmed);
         }
         if (descricao != null) {
-            equipe.setDescricao(descricao);
+            equipe.setDescricao(descricao.isBlank() ? null : descricao.trim());
         }
 
         return equipeRepo.atualizar(equipe);
