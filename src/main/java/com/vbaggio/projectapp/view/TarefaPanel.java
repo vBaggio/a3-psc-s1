@@ -7,12 +7,11 @@ import com.vbaggio.projectapp.model.entity.Projeto;
 import com.vbaggio.projectapp.model.entity.Tarefa;
 import com.vbaggio.projectapp.model.entity.Usuario;
 import com.vbaggio.projectapp.model.enums.StatusTarefa;
+import com.vbaggio.projectapp.util.DateUtils;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -23,51 +22,58 @@ public class TarefaPanel extends JPanel {
     private final ProjetoController projetoCtrl = new ProjetoController();
     private final UsuarioController usuarioCtrl = new UsuarioController();
 
-    private final JComboBox<String> comboProjeto = new JComboBox<>();
-    private List<Projeto>           listaProjetos;
-
     private final DefaultTableModel modelo = new DefaultTableModel(
             new String[]{"ID", "Nome", "Status", "Prazo", "Responsável"}, 0) {
         @Override public boolean isCellEditable(int r, int c) { return false; }
     };
     private final JTable tabela = new JTable(modelo);
 
+    private final JComboBox<String> comboProjeto = new JComboBox<>();
+    private List<Projeto> listaProjetos;
+
     public TarefaPanel() {
         setLayout(new BorderLayout(0, 4));
         setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
-
-        add(criarFiltro(),           BorderLayout.NORTH);
+        add(criarFiltro(),   BorderLayout.NORTH);
         add(new JScrollPane(tabela), BorderLayout.CENTER);
-        add(criarToolbar(),          BorderLayout.SOUTH);
-
+        add(criarToolbar(),  BorderLayout.SOUTH);
         ocultarColuna(0);
-
         carregarComboProjeto();
         comboProjeto.addActionListener(e -> carregarTarefas());
     }
 
     private JPanel criarFiltro() {
-        JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 4));
-        p.add(new JLabel("Projeto:"));
-        p.add(comboProjeto);
-        JButton btnAtualizar = new JButton("↻");
-        btnAtualizar.addActionListener(e -> { carregarComboProjeto(); carregarTarefas(); });
-        p.add(btnAtualizar);
-        return p;
+        JPanel bar = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
+        JButton btnRefresh = new JButton("↻");
+        bar.add(new JLabel("Projeto:")); bar.add(comboProjeto); bar.add(btnRefresh);
+        btnRefresh.addActionListener(e -> { carregarComboProjeto(); carregarTarefas(); });
+        return bar;
     }
 
     private JPanel criarToolbar() {
         JPanel bar = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
         JButton btnNova    = new JButton("Nova Tarefa");
+        JButton btnEditar  = new JButton("Editar");
         JButton btnStatus  = new JButton("Alterar Status");
         JButton btnRespons = new JButton("Reatribuir");
         JButton btnExcluir = new JButton("Excluir");
-        bar.add(btnNova); bar.add(btnStatus); bar.add(btnRespons); bar.add(btnExcluir);
+        btnEditar.setEnabled(false);
+        bar.add(btnNova); bar.add(btnEditar); bar.add(btnStatus); bar.add(btnRespons); bar.add(btnExcluir);
 
         btnNova.addActionListener(e -> abrirFormulario());
+        btnEditar.addActionListener(e -> abrirEdicao());
         btnStatus.addActionListener(e -> alterarStatus());
         btnRespons.addActionListener(e -> reatribuir());
         btnExcluir.addActionListener(e -> excluir());
+
+        tabela.getSelectionModel().addListSelectionListener(e -> {
+            if (e.getValueIsAdjusting()) return;
+            int row = tabela.getSelectedRow();
+            if (row < 0) { btnEditar.setEnabled(false); return; }
+            Object s = modelo.getValueAt(row, 2);
+            btnEditar.setEnabled(s != StatusTarefa.CONCLUIDA && s != StatusTarefa.CANCELADA);
+        });
+
         return bar;
     }
 
@@ -78,9 +84,10 @@ public class TarefaPanel extends JPanel {
         }
         UUID projetoId = listaProjetos.get(comboProjeto.getSelectedIndex()).getId();
 
-        JTextField campNome  = new JTextField(24);
-        JTextArea  campDesc  = new JTextArea(3, 24);
-        JTextField campPrazo = new JTextField("yyyy-MM-dd", 10);
+        JTextField campNome = new JTextField(24);
+        JTextArea  campDesc = new JTextArea(3, 24);
+        campDesc.setLineWrap(true); campDesc.setWrapStyleWord(true);
+        JFormattedTextField campPrazo = DateUtils.campData();
 
         List<Usuario> usuarios = usuarioCtrl.listarUsuarios();
         String[] nomesUsuarios = new String[usuarios.size() + 1];
@@ -92,38 +99,70 @@ public class TarefaPanel extends JPanel {
         }
         JComboBox<String> comboResp = new JComboBox<>(nomesUsuarios);
 
-        JPanel form = new JPanel(new GridLayout(0, 2, 6, 4));
-        form.add(new JLabel("Nome:"));               form.add(campNome);
-        form.add(new JLabel("Descrição:"));          form.add(new JScrollPane(campDesc));
-        form.add(new JLabel("Prazo (yyyy-MM-dd):")); form.add(campPrazo);
-        form.add(new JLabel("Responsável:"));        form.add(comboResp);
+        JPanel form = montarForm(
+                "Nome:", campNome,
+                "Descrição:", new JScrollPane(campDesc),
+                "Prazo (dd/MM/yyyy):", campPrazo,
+                "Responsável:", comboResp);
 
-        int op = JOptionPane.showConfirmDialog(this, form, "Nova Tarefa",
-                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-        if (op != JOptionPane.OK_OPTION) return;
+        while (true) {
+            int op = JOptionPane.showConfirmDialog(this, form, "Nova Tarefa",
+                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            if (op != JOptionPane.OK_OPTION) return;
+            try {
+                ctrl.criarTarefa(campNome.getText().trim(), campDesc.getText().trim(),
+                        DateUtils.parse(campPrazo.getText()),
+                        projetoId, idsUsuarios[comboResp.getSelectedIndex()]);
+                carregarTarefas();
+                return;
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
 
-        try {
-            LocalDate prazo = parsarData(campPrazo.getText().trim());
-            UUID respId = idsUsuarios[comboResp.getSelectedIndex()];
-            ctrl.criarTarefa(campNome.getText().trim(), campDesc.getText().trim(),
-                    prazo, projetoId, respId);
-            carregarTarefas();
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+    private void abrirEdicao() {
+        int linha = tabela.getSelectedRow();
+        if (linha < 0) { JOptionPane.showMessageDialog(this, "Selecione uma tarefa."); return; }
+        UUID id = UUID.fromString((String) modelo.getValueAt(linha, 0));
+        Tarefa t = ctrl.buscarPorId(id)
+                .orElseThrow(() -> new IllegalStateException("Tarefa não encontrada."));
+
+        JTextField campNome = new JTextField(t.getNome(), 24);
+        JTextArea  campDesc = new JTextArea(t.getDescricao() != null ? t.getDescricao() : "", 3, 24);
+        campDesc.setLineWrap(true); campDesc.setWrapStyleWord(true);
+        JFormattedTextField campPrazo = DateUtils.campData();
+        if (t.getPrazo() != null) campPrazo.setText(DateUtils.format(t.getPrazo()));
+
+        JPanel form = montarForm(
+                "Nome:", campNome,
+                "Descrição:", new JScrollPane(campDesc),
+                "Prazo (dd/MM/yyyy):", campPrazo);
+
+        while (true) {
+            int op = JOptionPane.showConfirmDialog(this, form, "Editar Tarefa",
+                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            if (op != JOptionPane.OK_OPTION) return;
+            try {
+                ctrl.atualizarTarefa(id, campNome.getText().trim(), campDesc.getText().trim(),
+                        DateUtils.parse(campPrazo.getText()));
+                carregarTarefas();
+                return;
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 
     private void alterarStatus() {
         int linha = tabela.getSelectedRow();
         if (linha < 0) { JOptionPane.showMessageDialog(this, "Selecione uma tarefa."); return; }
-        UUID id = UUID.fromString(modelo.getValueAt(linha, 0).toString());
-
+        UUID id = UUID.fromString((String) modelo.getValueAt(linha, 0));
         StatusTarefa[] opcoes = StatusTarefa.values();
         StatusTarefa escolha = (StatusTarefa) JOptionPane.showInputDialog(
                 this, "Novo status:", "Alterar Status",
                 JOptionPane.PLAIN_MESSAGE, null, opcoes, opcoes[0]);
         if (escolha == null) return;
-
         try {
             ctrl.atualizarStatus(id, escolha);
             carregarTarefas();
@@ -135,7 +174,7 @@ public class TarefaPanel extends JPanel {
     private void reatribuir() {
         int linha = tabela.getSelectedRow();
         if (linha < 0) { JOptionPane.showMessageDialog(this, "Selecione uma tarefa."); return; }
-        UUID id = UUID.fromString(modelo.getValueAt(linha, 0).toString());
+        UUID id = UUID.fromString((String) modelo.getValueAt(linha, 0));
 
         List<Usuario> usuarios = usuarioCtrl.listarUsuarios();
         String[] nomes = new String[usuarios.size() + 1];
@@ -145,12 +184,11 @@ public class TarefaPanel extends JPanel {
             nomes[i + 1] = usuarios.get(i).getNome() + " [" + usuarios.get(i).getLogin() + "]";
             ids[i + 1]   = usuarios.get(i).getId();
         }
-        String escolha = (String) JOptionPane.showInputDialog(this,
-                "Novo responsável:", "Reatribuir",
+        String escolha = (String) JOptionPane.showInputDialog(
+                this, "Responsável:", "Reatribuir",
                 JOptionPane.PLAIN_MESSAGE, null, nomes, nomes[0]);
         if (escolha == null) return;
         int idx = Arrays.asList(nomes).indexOf(escolha);
-
         try {
             ctrl.reatribuirResponsavel(id, ids[idx]);
             carregarTarefas();
@@ -162,8 +200,9 @@ public class TarefaPanel extends JPanel {
     private void excluir() {
         int linha = tabela.getSelectedRow();
         if (linha < 0) { JOptionPane.showMessageDialog(this, "Selecione uma tarefa."); return; }
-        int conf = JOptionPane.showConfirmDialog(this, "Confirmar exclusão?",
-                "Excluir", JOptionPane.YES_NO_OPTION);
+        String nome = modelo.getValueAt(linha, 1).toString();
+        int conf = JOptionPane.showConfirmDialog(this, "Excluir tarefa '" + nome + "'?",
+                "Confirmar", JOptionPane.YES_NO_OPTION);
         if (conf != JOptionPane.YES_OPTION) return;
         UUID id = UUID.fromString(modelo.getValueAt(linha, 0).toString());
         try {
@@ -176,8 +215,8 @@ public class TarefaPanel extends JPanel {
 
     private void carregarComboProjeto() {
         int selAnterior = comboProjeto.getSelectedIndex();
-        comboProjeto.removeAllItems();
         listaProjetos = projetoCtrl.listarProjetos();
+        comboProjeto.removeAllItems();
         for (Projeto p : listaProjetos) {
             comboProjeto.addItem(p.getNome() + " [" + p.getStatus() + "]");
         }
@@ -187,26 +226,34 @@ public class TarefaPanel extends JPanel {
     }
 
     private void carregarTarefas() {
-        modelo.setRowCount(0);
         if (comboProjeto.getSelectedIndex() < 0 || listaProjetos == null || listaProjetos.isEmpty()) return;
         UUID projetoId = listaProjetos.get(comboProjeto.getSelectedIndex()).getId();
+        modelo.setRowCount(0);
         for (Tarefa t : ctrl.listarPorProjeto(projetoId)) {
             modelo.addRow(new Object[]{
-                    t.getId().toString(),
-                    t.getNome(),
-                    t.getStatus(),
-                    t.getPrazo()       != null ? t.getPrazo().toString()                : "",
-                    t.getResponsavel() != null ? t.getResponsavel().getNome()           : ""
+                    t.getId().toString(), t.getNome(), t.getStatus(),
+                    DateUtils.format(t.getPrazo()),
+                    t.getResponsavel() != null ? t.getResponsavel().getNome() : ""
             });
         }
     }
 
-    private LocalDate parsarData(String texto) {
-        if (texto == null || texto.isBlank() || texto.equals("yyyy-MM-dd")) return null;
-        try { return LocalDate.parse(texto); }
-        catch (DateTimeParseException ex) {
-            throw new IllegalArgumentException("Data inválida '" + texto + "'. Use o formato yyyy-MM-dd.");
+    private static JPanel montarForm(Object... labelsECampos) {
+        JPanel p = new JPanel(new GridBagLayout());
+        GridBagConstraints lbl = new GridBagConstraints();
+        lbl.anchor = GridBagConstraints.NORTHWEST;
+        lbl.insets = new Insets(5, 0, 2, 8); lbl.gridx = 0;
+        GridBagConstraints fld = new GridBagConstraints();
+        fld.weightx = 1.0; fld.gridx = 1; fld.insets = new Insets(3, 0, 2, 0);
+        for (int i = 0, row = 0; i < labelsECampos.length; i += 2, row++) {
+            lbl.gridy = row; fld.gridy = row;
+            boolean isArea = labelsECampos[i + 1] instanceof JScrollPane;
+            fld.fill    = isArea ? GridBagConstraints.BOTH : GridBagConstraints.HORIZONTAL;
+            fld.weighty = isArea ? 0.5 : 0;
+            p.add(new JLabel((String) labelsECampos[i]), lbl);
+            p.add((Component) labelsECampos[i + 1], fld);
         }
+        return p;
     }
 
     private void ocultarColuna(int col) {

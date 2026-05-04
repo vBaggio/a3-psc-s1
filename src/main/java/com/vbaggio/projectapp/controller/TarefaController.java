@@ -89,6 +89,22 @@ public class TarefaController {
         return tarefa;
     }
 
+    public void atualizarTarefa(UUID id, String nome, String descricao, LocalDate prazo) {
+        if (nome == null || nome.isBlank()) {
+            throw new IllegalArgumentException("Nome da tarefa é obrigatório.");
+        }
+        Tarefa tarefa = buscarTarefaOuFalhar(id);
+        if (tarefa.getStatus() == StatusTarefa.CONCLUIDA
+                || tarefa.getStatus() == StatusTarefa.CANCELADA) {
+            throw new IllegalStateException(
+                    "Não é possível editar uma tarefa com status " + tarefa.getStatus() + ".");
+        }
+        tarefa.setNome(nome.trim());
+        tarefa.setDescricao(descricao == null || descricao.isBlank() ? null : descricao.trim());
+        tarefa.setPrazo(prazo);
+        tarefaRepo.atualizar(tarefa);
+    }
+
     /**
      * Atualiza o status de uma tarefa seguindo a máquina de estados definida.
      *
