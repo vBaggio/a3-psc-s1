@@ -76,6 +76,44 @@ public class ProjetoController {
     }
 
     /**
+     * Atualiza os dados de um projeto existente.
+     *
+     * <p>Regras:</p>
+     * <ul>
+     *   <li>Nome obrigatório.</li>
+     *   <li>Data de previsão deve ser >= data de início (quando ambas informadas).</li>
+     *   <li>Projetos CONCLUIDO ou CANCELADO não podem ser editados.</li>
+     * </ul>
+     *
+     * @param id           UUID do projeto a ser atualizado
+     * @param nome         novo nome
+     * @param descricao    nova descrição (pode ser null)
+     * @param dataInicio   nova data de início (pode ser null)
+     * @param dataPrevisao nova data de previsão (pode ser null)
+     * @param gerenteId    UUID do novo gerente
+     */
+    public void atualizarProjeto(UUID id, String nome, String descricao,
+                                  LocalDate dataInicio, LocalDate dataPrevisao,
+                                  UUID gerenteId) {
+        if (nome == null || nome.isBlank()) {
+            throw new IllegalArgumentException("O nome do projeto é obrigatório.");
+        }
+        validarDatas(dataInicio, dataPrevisao);
+        Projeto projeto = buscarPorId(id);
+        if (projeto.getStatus() == StatusProjeto.CONCLUIDO
+                || projeto.getStatus() == StatusProjeto.CANCELADO) {
+            throw new IllegalStateException(
+                    "Não é possível editar um projeto com status " + projeto.getStatus() + ".");
+        }
+        projeto.setNome(nome.trim());
+        projeto.setDescricao(descricao == null || descricao.isBlank() ? null : descricao.trim());
+        projeto.setDataInicio(dataInicio);
+        projeto.setDataPrevisao(dataPrevisao);
+        projeto.setGerente(resolverGerente(gerenteId));
+        projetoRepo.atualizar(projeto);
+    }
+
+    /**
      * Atualiza o status de um projeto.
      *
      * <p>Regras de transição permitidas:</p>

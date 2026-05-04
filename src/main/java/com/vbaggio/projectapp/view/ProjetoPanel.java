@@ -6,19 +6,19 @@ import com.vbaggio.projectapp.model.entity.Projeto;
 import com.vbaggio.projectapp.model.entity.Usuario;
 import com.vbaggio.projectapp.model.enums.Perfil;
 import com.vbaggio.projectapp.model.enums.StatusProjeto;
+import com.vbaggio.projectapp.util.DateUtils;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.UUID;
 
 public class ProjetoPanel extends JPanel {
 
-    private final ProjetoController  ctrl        = new ProjetoController();
-    private final UsuarioController  usuarioCtrl = new UsuarioController();
+    private final ProjetoController ctrl        = new ProjetoController();
+    private final UsuarioController usuarioCtrl = new UsuarioController();
 
     private final DefaultTableModel modelo = new DefaultTableModel(
             new String[]{"ID", "Nome", "Status", "Início", "Previsão", "Gerente"}, 0) {
@@ -29,10 +29,8 @@ public class ProjetoPanel extends JPanel {
     public ProjetoPanel() {
         setLayout(new BorderLayout(0, 4));
         setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
-
         add(criarToolbar(), BorderLayout.NORTH);
         add(new JScrollPane(tabela), BorderLayout.CENTER);
-
         ocultarColuna(0);
         carregar();
     }
@@ -40,13 +38,25 @@ public class ProjetoPanel extends JPanel {
     private JPanel criarToolbar() {
         JPanel bar = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
         JButton btnNovo     = new JButton("Novo");
+        JButton btnEditar   = new JButton("Editar");
         JButton btnStatus   = new JButton("Alterar Status");
         JButton btnEncerrar = new JButton("Encerrar");
-        bar.add(btnNovo); bar.add(btnStatus); bar.add(btnEncerrar);
+        btnEditar.setEnabled(false);
+        bar.add(btnNovo); bar.add(btnEditar); bar.add(btnStatus); bar.add(btnEncerrar);
 
         btnNovo.addActionListener(e -> abrirFormulario());
+        btnEditar.addActionListener(e -> abrirEdicao());
         btnStatus.addActionListener(e -> alterarStatus());
         btnEncerrar.addActionListener(e -> encerrar());
+
+        tabela.getSelectionModel().addListSelectionListener(e -> {
+            if (e.getValueIsAdjusting()) return;
+            int row = tabela.getSelectedRow();
+            if (row < 0) { btnEditar.setEnabled(false); return; }
+            Object s = modelo.getValueAt(row, 2);
+            btnEditar.setEnabled(s != StatusProjeto.CONCLUIDO && s != StatusProjeto.CANCELADO);
+        });
+
         return bar;
     }
 
@@ -58,34 +68,92 @@ public class ProjetoPanel extends JPanel {
             return;
         }
 
-        JTextField campNome     = new JTextField(24);
-        JTextArea  campDesc     = new JTextArea(3, 24);
-        JTextField campInicio   = new JTextField("yyyy-MM-dd", 10);
-        JTextField campPrevisao = new JTextField("yyyy-MM-dd", 10);
+        JTextField campNome = new JTextField(24);
+        JTextArea campDesc  = new JTextArea(3, 24);
+        campDesc.setLineWrap(true); campDesc.setWrapStyleWord(true);
+        JFormattedTextField campInicio   = DateUtils.campData();
+        JFormattedTextField campPrevisao = DateUtils.campData();
+        String[] nomes = gerentes.stream().map(Usuario::getNome).toArray(String[]::new);
+        JComboBox<String> comboGerente = new JComboBox<>(nomes);
 
-        String[] nomesGerentes = gerentes.stream().map(Usuario::getNome).toArray(String[]::new);
-        JComboBox<String> comboGerente = new JComboBox<>(nomesGerentes);
+        JPanel form = montarForm(
+                "Nome:", campNome,
+                "Descrição:", new JScrollPane(campDesc),
+                "Início (dd/MM/yyyy):", campInicio,
+                "Previsão (dd/MM/yyyy):", campPrevisao,
+                "Gerente:", comboGerente);
 
-        JPanel form = new JPanel(new GridLayout(0, 2, 6, 4));
-        form.add(new JLabel("Nome:"));                 form.add(campNome);
-        form.add(new JLabel("Descrição:"));            form.add(new JScrollPane(campDesc));
-        form.add(new JLabel("Início (yyyy-MM-dd):"));  form.add(campInicio);
-        form.add(new JLabel("Previsão (yyyy-MM-dd):")); form.add(campPrevisao);
-        form.add(new JLabel("Gerente:"));              form.add(comboGerente);
+        while (true) {
+            int op = JOptionPane.showConfirmDialog(this, form, "Novo Projeto",
+                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            if (op != JOptionPane.OK_OPTION) return;
+            try {
+                UUID gerenteId = gerentes.get(comboGerente.getSelectedIndex()).getId();
+                ctrl.criarProjeto(campNome.getText().trim(), campDesc.getText().trim(),
+                        DateUtils.parse(campInicio.getText()),
+                        DateUtils.parse(campPrevisao.getText()),
+                        gerenteId);
+                carregar();
+                return;
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
 
-        int op = JOptionPane.showConfirmDialog(this, form, "Novo Projeto",
-                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-        if (op != JOptionPane.OK_OPTION) return;
+    private void abrirEdicao() {
+        int linha = tabela.getSelectedRow();
+        if (linha < 0) { JOptionPane.showMessageDialog(this, "Selecione um projeto."); return; }
+        UUID id = UUID.fromString((String) modelo.getValueAt(linha, 0));
+        Projeto p = ctrl.buscarPorId(id);
 
-        try {
-            LocalDate inicio   = parsarData(campInicio.getText().trim());
-            LocalDate previsao = parsarData(campPrevisao.getText().trim());
-            UUID gerenteId = gerentes.get(comboGerente.getSelectedIndex()).getId();
-            ctrl.criarProjeto(campNome.getText().trim(), campDesc.getText().trim(),
-                    inicio, previsao, gerenteId);
-            carregar();
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+        List<Usuario> gerentes = usuarioCtrl.listarPorPerfil(Perfil.GERENTE);
+        if (gerentes.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "Não há usuários com perfil GERENTE cadastrados.", "Aviso", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        JTextField campNome = new JTextField(p.getNome(), 24);
+        JTextArea campDesc  = new JTextArea(p.getDescricao() != null ? p.getDescricao() : "", 3, 24);
+        campDesc.setLineWrap(true); campDesc.setWrapStyleWord(true);
+        JFormattedTextField campInicio   = DateUtils.campData();
+        JFormattedTextField campPrevisao = DateUtils.campData();
+        if (p.getDataInicio()   != null) campInicio.setText(DateUtils.format(p.getDataInicio()));
+        if (p.getDataPrevisao() != null) campPrevisao.setText(DateUtils.format(p.getDataPrevisao()));
+
+        String[] nomes = gerentes.stream().map(Usuario::getNome).toArray(String[]::new);
+        JComboBox<String> comboGerente = new JComboBox<>(nomes);
+        if (p.getGerente() != null) {
+            for (int i = 0; i < gerentes.size(); i++) {
+                if (gerentes.get(i).getId().equals(p.getGerente().getId())) {
+                    comboGerente.setSelectedIndex(i); break;
+                }
+            }
+        }
+
+        JPanel form = montarForm(
+                "Nome:", campNome,
+                "Descrição:", new JScrollPane(campDesc),
+                "Início (dd/MM/yyyy):", campInicio,
+                "Previsão (dd/MM/yyyy):", campPrevisao,
+                "Gerente:", comboGerente);
+
+        while (true) {
+            int op = JOptionPane.showConfirmDialog(this, form, "Editar Projeto",
+                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            if (op != JOptionPane.OK_OPTION) return;
+            try {
+                UUID gerenteId = gerentes.get(comboGerente.getSelectedIndex()).getId();
+                ctrl.atualizarProjeto(id, campNome.getText().trim(), campDesc.getText().trim(),
+                        DateUtils.parse(campInicio.getText()),
+                        DateUtils.parse(campPrevisao.getText()),
+                        gerenteId);
+                carregar();
+                return;
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 
@@ -93,13 +161,11 @@ public class ProjetoPanel extends JPanel {
         int linha = tabela.getSelectedRow();
         if (linha < 0) { JOptionPane.showMessageDialog(this, "Selecione um projeto."); return; }
         UUID id = UUID.fromString(modelo.getValueAt(linha, 0).toString());
-
         StatusProjeto[] opcoes = StatusProjeto.values();
         StatusProjeto escolha = (StatusProjeto) JOptionPane.showInputDialog(
                 this, "Novo status:", "Alterar Status",
                 JOptionPane.PLAIN_MESSAGE, null, opcoes, opcoes[0]);
         if (escolha == null) return;
-
         try {
             ctrl.atualizarStatus(id, escolha);
             carregar();
@@ -113,15 +179,25 @@ public class ProjetoPanel extends JPanel {
         if (linha < 0) { JOptionPane.showMessageDialog(this, "Selecione um projeto."); return; }
         UUID id = UUID.fromString(modelo.getValueAt(linha, 0).toString());
 
-        String dataStr = JOptionPane.showInputDialog(this,
-                "Data de encerramento (yyyy-MM-dd):", LocalDate.now().toString());
-        if (dataStr == null || dataStr.isBlank()) return;
+        JFormattedTextField campFim = DateUtils.campData();
+        campFim.setText(DateUtils.format(LocalDate.now()));
 
-        try {
-            ctrl.encerrarProjeto(id, LocalDate.parse(dataStr.trim()));
-            carregar();
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+        while (true) {
+            int op = JOptionPane.showConfirmDialog(this, campFim, "Data de Encerramento (dd/MM/yyyy)",
+                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            if (op != JOptionPane.OK_OPTION) return;
+            try {
+                LocalDate dataFim = DateUtils.parse(campFim.getText());
+                if (dataFim == null) {
+                    JOptionPane.showMessageDialog(this, "Informe a data de encerramento.", "Erro", JOptionPane.ERROR_MESSAGE);
+                    continue;
+                }
+                ctrl.encerrarProjeto(id, dataFim);
+                carregar();
+                return;
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 
@@ -129,22 +205,30 @@ public class ProjetoPanel extends JPanel {
         modelo.setRowCount(0);
         for (Projeto p : ctrl.listarProjetos()) {
             modelo.addRow(new Object[]{
-                    p.getId().toString(),
-                    p.getNome(),
-                    p.getStatus(),
-                    p.getDataInicio()   != null ? p.getDataInicio().toString()   : "",
-                    p.getDataPrevisao() != null ? p.getDataPrevisao().toString() : "",
-                    p.getGerente()      != null ? p.getGerente().getNome()       : ""
+                    p.getId().toString(), p.getNome(), p.getStatus(),
+                    DateUtils.format(p.getDataInicio()),
+                    DateUtils.format(p.getDataPrevisao()),
+                    p.getGerente() != null ? p.getGerente().getNome() : ""
             });
         }
     }
 
-    private LocalDate parsarData(String texto) {
-        if (texto == null || texto.isBlank() || texto.equals("yyyy-MM-dd")) return null;
-        try { return LocalDate.parse(texto); }
-        catch (DateTimeParseException ex) {
-            throw new IllegalArgumentException("Data inválida '" + texto + "'. Use o formato yyyy-MM-dd.");
+    private static JPanel montarForm(Object... labelsECampos) {
+        JPanel p = new JPanel(new GridBagLayout());
+        GridBagConstraints lbl = new GridBagConstraints();
+        lbl.anchor = GridBagConstraints.NORTHWEST;
+        lbl.insets = new Insets(5, 0, 2, 8); lbl.gridx = 0;
+        GridBagConstraints fld = new GridBagConstraints();
+        fld.weightx = 1.0; fld.gridx = 1; fld.insets = new Insets(3, 0, 2, 0);
+        for (int i = 0, row = 0; i < labelsECampos.length; i += 2, row++) {
+            lbl.gridy = row; fld.gridy = row;
+            boolean isArea = labelsECampos[i + 1] instanceof JScrollPane;
+            fld.fill    = isArea ? GridBagConstraints.BOTH : GridBagConstraints.HORIZONTAL;
+            fld.weighty = isArea ? 0.5 : 0;
+            p.add(new JLabel((String) labelsECampos[i]), lbl);
+            p.add((Component) labelsECampos[i + 1], fld);
         }
+        return p;
     }
 
     private void ocultarColuna(int col) {

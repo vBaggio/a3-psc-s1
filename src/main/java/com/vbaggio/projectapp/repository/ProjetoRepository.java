@@ -44,7 +44,12 @@ public class ProjetoRepository {
     public Optional<Projeto> buscarPorId(UUID id) {
         EntityManager em = JpaUtil.getEntityManager();
         try {
-            return Optional.ofNullable(em.find(Projeto.class, id));
+            List<Projeto> result = em.createQuery(
+                    "SELECT p FROM Projeto p LEFT JOIN FETCH p.gerente WHERE p.id = :id",
+                    Projeto.class)
+                    .setParameter("id", id)
+                    .getResultList();
+            return result.isEmpty() ? Optional.empty() : Optional.of(result.get(0));
         } finally {
             em.close();
         }
