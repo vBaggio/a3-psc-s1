@@ -177,6 +177,33 @@ public class TarefaRepository {
     }
 
     /**
+     * Cancela em lote todas as tarefas PENDENTE ou EM_ANDAMENTO de um projeto.
+     * Executa um único JPQL bulk UPDATE, eliminando N round-trips.
+     *
+     * @param projetoId UUID do projeto cujas tarefas serão canceladas
+     */
+    public void cancelarPorProjeto(UUID projetoId) {
+        EntityManager em = JpaUtil.getEntityManager();
+        try {
+            em.getTransaction().begin();
+            em.createQuery(
+                    "UPDATE Tarefa t SET t.status = :cancelada " +
+                    "WHERE t.projeto.id = :projetoId " +
+                    "AND t.status IN :ativos")
+                    .setParameter("cancelada", StatusTarefa.CANCELADA)
+                    .setParameter("projetoId", projetoId)
+                    .setParameter("ativos", java.util.List.of(StatusTarefa.PENDENTE, StatusTarefa.EM_ANDAMENTO))
+                    .executeUpdate();
+            em.getTransaction().commit();
+        } catch (Exception e) {
+            em.getTransaction().rollback();
+            throw e;
+        } finally {
+            em.close();
+        }
+    }
+
+    /**
      * Retorna todas as tarefas que possuem responsável, com JOIN FETCH do responsável.
      * Usado para cálculo de carga de trabalho em memória (evita N+1).
      */

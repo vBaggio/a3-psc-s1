@@ -1,11 +1,9 @@
 package com.vbaggio.projectapp.controller;
 
 import com.vbaggio.projectapp.model.entity.Projeto;
-import com.vbaggio.projectapp.model.entity.Tarefa;
 import com.vbaggio.projectapp.model.entity.Usuario;
 import com.vbaggio.projectapp.model.enums.Perfil;
 import com.vbaggio.projectapp.model.enums.StatusProjeto;
-import com.vbaggio.projectapp.model.enums.StatusTarefa;
 import com.vbaggio.projectapp.repository.EquipeRepository;
 import com.vbaggio.projectapp.repository.ProjetoRepository;
 import com.vbaggio.projectapp.repository.TarefaRepository;
@@ -134,13 +132,7 @@ public class ProjetoController {
         Projeto atualizado = projetoRepo.atualizar(projeto);
 
         if (novoStatus == StatusProjeto.CANCELADO) {
-            List<Tarefa> tarefasAtivas = tarefaRepo.listarPorProjeto(projetoId);
-            for (Tarefa t : tarefasAtivas) {
-                if (t.getStatus() == StatusTarefa.PENDENTE || t.getStatus() == StatusTarefa.EM_ANDAMENTO) {
-                    t.setStatus(StatusTarefa.CANCELADA);
-                    tarefaRepo.atualizar(t);
-                }
-            }
+            tarefaRepo.cancelarPorProjeto(projetoId);
         }
 
         return atualizado;
