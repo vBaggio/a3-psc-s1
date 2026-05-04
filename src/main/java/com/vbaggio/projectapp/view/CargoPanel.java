@@ -36,6 +36,16 @@ public class CargoPanel extends JPanel {
         JButton btnExcluir = new JButton("Excluir");
         bar.add(btnNovo); bar.add(btnEditar); bar.add(btnExcluir);
 
+        btnEditar.setEnabled(false);
+        btnExcluir.setEnabled(false);
+
+        tabela.getSelectionModel().addListSelectionListener(e -> {
+            if (e.getValueIsAdjusting()) return;
+            boolean sel = tabela.getSelectedRow() >= 0;
+            btnEditar.setEnabled(sel);
+            btnExcluir.setEnabled(sel);
+        });
+
         btnNovo.addActionListener(e -> abrirFormulario(null));
         btnEditar.addActionListener(e -> {
             int linha = tabela.getSelectedRow();
@@ -74,8 +84,10 @@ public class CargoPanel extends JPanel {
     private void excluir() {
         int linha = tabela.getSelectedRow();
         if (linha < 0) { JOptionPane.showMessageDialog(this, "Selecione um cargo."); return; }
-        int conf = JOptionPane.showConfirmDialog(this, "Confirmar exclusão?",
-                "Excluir", JOptionPane.YES_NO_OPTION);
+        String nome = modelo.getValueAt(linha, 1).toString();
+        int conf = JOptionPane.showConfirmDialog(this,
+                "Excluir cargo '" + nome + "'?",
+                "Confirmar", JOptionPane.YES_NO_OPTION);
         if (conf != JOptionPane.YES_OPTION) return;
         UUID id = UUID.fromString(modelo.getValueAt(linha, 0).toString());
         try {

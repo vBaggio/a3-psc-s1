@@ -58,6 +58,16 @@ public class EquipePanel extends JPanel {
         JButton btnExcluir = new JButton("Excluir");
         bar.add(btnNova); bar.add(btnEditar); bar.add(btnExcluir);
 
+        btnEditar.setEnabled(false);
+        btnExcluir.setEnabled(false);
+
+        tabelaEquipes.getSelectionModel().addListSelectionListener(e -> {
+            if (e.getValueIsAdjusting()) return;
+            boolean sel = tabelaEquipes.getSelectedRow() >= 0;
+            btnEditar.setEnabled(sel);
+            btnExcluir.setEnabled(sel);
+        });
+
         btnNova.addActionListener(e -> abrirFormularioEquipe(null));
         btnEditar.addActionListener(e -> {
             int linha = tabelaEquipes.getSelectedRow();
@@ -80,6 +90,13 @@ public class EquipePanel extends JPanel {
         JButton btnAdicionar = new JButton("Adicionar");
         JButton btnRemover   = new JButton("Remover");
         bar.add(btnAdicionar); bar.add(btnRemover);
+
+        btnRemover.setEnabled(false);
+
+        tabelaMembros.getSelectionModel().addListSelectionListener(e -> {
+            if (e.getValueIsAdjusting()) return;
+            btnRemover.setEnabled(tabelaMembros.getSelectedRow() >= 0);
+        });
 
         btnAdicionar.addActionListener(e -> adicionarMembro());
         btnRemover.addActionListener(e -> removerMembro());
@@ -129,8 +146,10 @@ public class EquipePanel extends JPanel {
     private void excluirEquipe() {
         int linha = tabelaEquipes.getSelectedRow();
         if (linha < 0) { JOptionPane.showMessageDialog(this, "Selecione uma equipe."); return; }
-        int conf = JOptionPane.showConfirmDialog(this, "Confirmar exclusão?",
-                "Excluir", JOptionPane.YES_NO_OPTION);
+        String nome = modeloEquipes.getValueAt(linha, 1).toString();
+        int conf = JOptionPane.showConfirmDialog(this,
+                "Excluir equipe '" + nome + "'?",
+                "Confirmar", JOptionPane.YES_NO_OPTION);
         if (conf != JOptionPane.YES_OPTION) return;
         UUID id = UUID.fromString(modeloEquipes.getValueAt(linha, 0).toString());
         try {
