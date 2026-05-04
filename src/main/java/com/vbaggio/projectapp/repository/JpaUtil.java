@@ -1,4 +1,4 @@
-package com.vbaggio.projectapp.infra;
+package com.vbaggio.projectapp.repository;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;

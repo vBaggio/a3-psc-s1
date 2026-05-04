@@ -1,6 +1,6 @@
 package com.vbaggio.projectapp.repository;
 
-import com.vbaggio.projectapp.infra.JpaUtil;
+import com.vbaggio.projectapp.repository.JpaUtil;
 import com.vbaggio.projectapp.model.entity.Projeto;
 import com.vbaggio.projectapp.model.enums.StatusProjeto;
 import jakarta.persistence.EntityManager;
