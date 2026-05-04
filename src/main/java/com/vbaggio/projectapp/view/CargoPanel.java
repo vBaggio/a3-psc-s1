@@ -49,23 +49,25 @@ public class CargoPanel extends JPanel {
 
     private void abrirFormulario(Cargo cargo) {
         JTextField campNome = new JTextField(cargo != null ? cargo.getNome() : "", 24);
-        JPanel form = new JPanel(new GridLayout(1, 2, 6, 0));
+        JPanel form = new JPanel(new GridLayout(0, 2, 6, 4));
         form.add(new JLabel("Nome:")); form.add(campNome);
 
-        int op = JOptionPane.showConfirmDialog(this, form,
-                cargo == null ? "Novo Cargo" : "Editar Cargo",
-                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-        if (op != JOptionPane.OK_OPTION) return;
-
-        try {
-            if (cargo == null) {
-                ctrl.cadastrarCargo(campNome.getText().trim());
-            } else {
-                ctrl.atualizarNome(cargo.getId(), campNome.getText().trim());
+        String titulo = cargo == null ? "Novo Cargo" : "Editar Cargo";
+        while (true) {
+            int op = JOptionPane.showConfirmDialog(this, form, titulo,
+                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            if (op != JOptionPane.OK_OPTION) return;
+            try {
+                if (cargo == null) {
+                    ctrl.cadastrarCargo(campNome.getText().trim());
+                } else {
+                    ctrl.atualizarNome(cargo.getId(), campNome.getText().trim());
+                }
+                carregar();
+                return;
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
             }
-            carregar();
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
         }
     }
 
