@@ -12,6 +12,8 @@ import com.vbaggio.projectapp.util.OpcaoItem;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -33,6 +35,12 @@ public class ProjetoPanel extends JPanel {
         add(criarToolbar(), BorderLayout.NORTH);
         add(new JScrollPane(tabela), BorderLayout.CENTER);
         ocultarColuna(0);
+        tabela.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2 && tabela.getSelectedRow() >= 0) abrirEdicao();
+            }
+        });
         carregar();
     }
 

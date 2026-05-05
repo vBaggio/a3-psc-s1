@@ -13,6 +13,8 @@ import com.vbaggio.projectapp.util.OpcaoItem;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.UUID;
 
@@ -37,8 +39,21 @@ public class TarefaPanel extends JPanel {
         add(new JScrollPane(tabela), BorderLayout.CENTER);
         add(criarToolbar(),  BorderLayout.SOUTH);
         ocultarColuna(0);
-        carregarComboProjeto();
-        comboProjeto.addActionListener(e -> carregarTarefas());
+        tabela.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2 && tabela.getSelectedRow() >= 0) abrirEdicao();
+            }
+        });
+
+        if (projetoFixo != null) {
+            comboProjeto.addItem(new OpcaoItem(projetoFixo, labelProjeto));
+            comboProjeto.setEnabled(false);
+            carregarTarefas();
+        } else {
+            carregarComboProjeto();
+            comboProjeto.addActionListener(e -> carregarTarefas());
+        }
     }
 
     private JPanel criarFiltro() {

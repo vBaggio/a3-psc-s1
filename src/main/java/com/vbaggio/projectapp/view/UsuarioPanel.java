@@ -10,6 +10,8 @@ import com.vbaggio.projectapp.util.OpcaoItem;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.UUID;
 
@@ -32,6 +34,16 @@ public class UsuarioPanel extends JPanel {
         add(new JScrollPane(tabela), BorderLayout.CENTER);
 
         ocultarColuna(0);
+        tabela.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2 && tabela.getSelectedRow() >= 0) {
+                    int linha = tabela.getSelectedRow();
+                    UUID id = UUID.fromString(modelo.getValueAt(linha, 0).toString());
+                    abrirFormulario(ctrl.buscarPorId(id));
+                }
+            }
+        });
         carregar();
     }
 
