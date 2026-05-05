@@ -73,6 +73,7 @@ public class ProjetoPanel extends JPanel {
         JTextArea campDesc  = new JTextArea(3, 24);
         campDesc.setLineWrap(true); campDesc.setWrapStyleWord(true);
         JFormattedTextField campInicio   = DateUtils.campData();
+        campInicio.setText(DateUtils.format(LocalDate.now()));
         JFormattedTextField campPrevisao = DateUtils.campData();
         OpcaoItem[] opcoesGerente = gerentes.stream()
                 .map(u -> new OpcaoItem(u.getId(), u.getNome()))
