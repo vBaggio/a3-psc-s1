@@ -36,9 +36,12 @@ public class HomePanel extends JPanel {
     // ------------------------------------------------------------------
 
     private JPanel criarCabecalho() {
-        JPanel p = new JPanel();
-        p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
-        p.setBorder(BorderFactory.createEmptyBorder(44, 0, 28, 0));
+        JPanel outer = new JPanel(new BorderLayout());
+        outer.setBorder(BorderFactory.createEmptyBorder(44, 16, 28, 16));
+
+        JPanel centro = new JPanel();
+        centro.setLayout(new BoxLayout(centro, BoxLayout.Y_AXIS));
+        centro.setOpaque(false);
 
         JLabel titulo = new JLabel("Sistema de Gerenciamento de Projetos e Equipes");
         titulo.setFont(titulo.getFont().deriveFont(Font.BOLD, 22f));
@@ -53,12 +56,21 @@ public class HomePanel extends JPanel {
         sep.setMaximumSize(new Dimension(200, 1));
         sep.setAlignmentX(CENTER_ALIGNMENT);
 
-        p.add(titulo);
-        p.add(Box.createVerticalStrut(10));
-        p.add(sub);
-        p.add(Box.createVerticalStrut(20));
-        p.add(sep);
-        return p;
+        centro.add(titulo);
+        centro.add(Box.createVerticalStrut(10));
+        centro.add(sub);
+        centro.add(Box.createVerticalStrut(20));
+        centro.add(sep);
+
+        JButton btnSair = new JButton("Sair");
+        btnSair.addActionListener(e -> frame.mostrarLogin());
+        JPanel painelSair = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        painelSair.setOpaque(false);
+        painelSair.add(btnSair);
+
+        outer.add(centro,     BorderLayout.CENTER);
+        outer.add(painelSair, BorderLayout.EAST);
+        return outer;
     }
 
     // ------------------------------------------------------------------
