@@ -157,8 +157,15 @@ public class TarefaPanel extends JPanel {
     private void alterarStatus() {
         int linha = tabela.getSelectedRow();
         if (linha < 0) { JOptionPane.showMessageDialog(this, "Selecione uma tarefa."); return; }
-        UUID id = UUID.fromString((String) modelo.getValueAt(linha, 0));
-        StatusTarefa[] opcoes = StatusTarefa.values();
+        UUID id = UUID.fromString(modelo.getValueAt(linha, 0).toString());
+        StatusTarefa atual = (StatusTarefa) modelo.getValueAt(linha, 2);
+        StatusTarefa[] opcoes = atual.proximosStatus();
+        if (opcoes.length == 0) {
+            JOptionPane.showMessageDialog(this,
+                    "Tarefa " + atual + " não permite alteração de status.",
+                    "Aviso", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
         StatusTarefa escolha = (StatusTarefa) JOptionPane.showInputDialog(
                 this, "Novo status:", "Alterar Status",
                 JOptionPane.PLAIN_MESSAGE, null, opcoes, opcoes[0]);

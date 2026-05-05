@@ -167,7 +167,14 @@ public class ProjetoPanel extends JPanel {
         int linha = tabela.getSelectedRow();
         if (linha < 0) { JOptionPane.showMessageDialog(this, "Selecione um projeto."); return; }
         UUID id = UUID.fromString(modelo.getValueAt(linha, 0).toString());
-        StatusProjeto[] opcoes = StatusProjeto.values();
+        StatusProjeto atual = (StatusProjeto) modelo.getValueAt(linha, 2);
+        StatusProjeto[] opcoes = atual.proximosStatus();
+        if (opcoes.length == 0) {
+            JOptionPane.showMessageDialog(this,
+                    "Projeto " + atual + " não permite alteração de status.",
+                    "Aviso", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
         StatusProjeto escolha = (StatusProjeto) JOptionPane.showInputDialog(
                 this, "Novo status:", "Alterar Status",
                 JOptionPane.PLAIN_MESSAGE, null, opcoes, opcoes[0]);
