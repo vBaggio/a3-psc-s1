@@ -42,7 +42,11 @@ public class ProjetoPanel extends JPanel {
         JButton btnEditar   = new JButton("Editar");
         JButton btnStatus   = new JButton("Alterar Status");
         JButton btnEncerrar = new JButton("Encerrar");
+
         btnEditar.setEnabled(false);
+        btnStatus.setEnabled(false);
+        btnEncerrar.setEnabled(false);
+
         bar.add(btnNovo); bar.add(btnEditar); bar.add(btnStatus); bar.add(btnEncerrar);
 
         btnNovo.addActionListener(e -> abrirFormulario());
@@ -53,9 +57,16 @@ public class ProjetoPanel extends JPanel {
         tabela.getSelectionModel().addListSelectionListener(e -> {
             if (e.getValueIsAdjusting()) return;
             int row = tabela.getSelectedRow();
-            if (row < 0) { btnEditar.setEnabled(false); return; }
-            Object s = modelo.getValueAt(row, 2);
+            if (row < 0) {
+                btnEditar.setEnabled(false);
+                btnStatus.setEnabled(false);
+                btnEncerrar.setEnabled(false);
+                return;
+            }
+            StatusProjeto s = (StatusProjeto) modelo.getValueAt(row, 2);
             btnEditar.setEnabled(s != StatusProjeto.CONCLUIDO && s != StatusProjeto.CANCELADO);
+            btnStatus.setEnabled(s.proximosStatus().length > 0);
+            btnEncerrar.setEnabled(s == StatusProjeto.EM_ANDAMENTO);
         });
 
         return bar;

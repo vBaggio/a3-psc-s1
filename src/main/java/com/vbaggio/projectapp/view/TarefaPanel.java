@@ -56,7 +56,12 @@ public class TarefaPanel extends JPanel {
         JButton btnStatus  = new JButton("Alterar Status");
         JButton btnRespons = new JButton("Reatribuir");
         JButton btnExcluir = new JButton("Excluir");
+
         btnEditar.setEnabled(false);
+        btnStatus.setEnabled(false);
+        btnRespons.setEnabled(false);
+        btnExcluir.setEnabled(false);
+
         bar.add(btnNova); bar.add(btnEditar); bar.add(btnStatus); bar.add(btnRespons); bar.add(btnExcluir);
 
         btnNova.addActionListener(e -> abrirFormulario());
@@ -68,9 +73,19 @@ public class TarefaPanel extends JPanel {
         tabela.getSelectionModel().addListSelectionListener(e -> {
             if (e.getValueIsAdjusting()) return;
             int row = tabela.getSelectedRow();
-            if (row < 0) { btnEditar.setEnabled(false); return; }
-            Object s = modelo.getValueAt(row, 2);
-            btnEditar.setEnabled(s != StatusTarefa.CONCLUIDA && s != StatusTarefa.CANCELADA);
+            if (row < 0) {
+                btnEditar.setEnabled(false);
+                btnStatus.setEnabled(false);
+                btnRespons.setEnabled(false);
+                btnExcluir.setEnabled(false);
+                return;
+            }
+            StatusTarefa s = (StatusTarefa) modelo.getValueAt(row, 2);
+            boolean editavel = s != StatusTarefa.CONCLUIDA && s != StatusTarefa.CANCELADA;
+            btnEditar.setEnabled(editavel);
+            btnStatus.setEnabled(s.proximosStatus().length > 0);
+            btnRespons.setEnabled(editavel);
+            btnExcluir.setEnabled(true);
         });
 
         return bar;
