@@ -296,64 +296,6 @@ public class GestaoProjetoPanel extends JPanel {
         }.execute();
     }
 
-    private void salvarProjeto() {
-        StatusProjeto novoStatus = (StatusProjeto) comboStatus.getSelectedItem();
-        OpcaoItem gerenteItem    = (OpcaoItem) comboGerente.getSelectedItem();
-        if (gerenteItem == null) {
-            JOptionPane.showMessageDialog(this, "Selecione um gerente.", "Aviso", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        UUID gerenteId   = gerenteItem.id();
-        String nome      = campNome.getText().trim();
-        String desc      = campDesc.getText().trim();
-        LocalDate inicio  = DateUtils.parse(campInicio.getText());
-        LocalDate previsao = DateUtils.parse(campPrevisao.getText());
-
-        // For CONCLUIDO transition: show date dialog on EDT before spawning the worker
-        final LocalDate[] dataFimHolder = {null};
-        if (novoStatus == StatusProjeto.CONCLUIDO) {
-            JFormattedTextField campFim = DateUtils.campData();
-            campFim.setText(DateUtils.format(LocalDate.now()));
-            while (true) {
-                int op = JOptionPane.showConfirmDialog(this, campFim,
-                        "Data de Encerramento (dd/MM/yyyy)",
-                        JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-                if (op != JOptionPane.OK_OPTION) return;
-                LocalDate dataFim = DateUtils.parse(campFim.getText());
-                if (dataFim == null) {
-                    JOptionPane.showMessageDialog(this, "Informe a data de encerramento.",
-                            "Erro", JOptionPane.ERROR_MESSAGE);
-                    continue;
-                }
-                dataFimHolder[0] = dataFim;
-                break;
-            }
-        }
-
-        new SwingWorker<Void, Void>() {
-            @Override protected Void doInBackground() throws Exception {
-                Projeto atual = projetoCtrl.buscarPorId(projetoId);
-                projetoCtrl.atualizarProjeto(projetoId, nome, desc, inicio, previsao, gerenteId);
-                if (novoStatus == StatusProjeto.CONCLUIDO && atual.getStatus() != StatusProjeto.CONCLUIDO) {
-                    projetoCtrl.encerrarProjeto(projetoId, dataFimHolder[0]);
-                } else if (novoStatus != atual.getStatus()) {
-                    projetoCtrl.atualizarStatus(projetoId, novoStatus);
-                }
-                return null;
-            }
-            @Override protected void done() {
-                try {
-                    get();
-                    if (onSalvar != null) onSalvar.run();
-                    carregarProjeto();
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(GestaoProjetoPanel.this,
-                            ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        }.execute();
-    }
-
     // ------------------------------------------------------------------
     // Load tasks
     // ------------------------------------------------------------------
@@ -397,7 +339,96 @@ public class GestaoProjetoPanel extends JPanel {
                 + concluidas + " concluída" + (concluidas != 1 ? "s" : "") + ")");
     }
 
-    private void salvarTudo() { /* Task 7 */ }
+    private void salvarTudo() {
+        StatusProjeto novoStatus = (StatusProjeto) comboStatus.getSelectedItem();
+        OpcaoItem     gerenteItem = (OpcaoItem) comboGerente.getSelectedItem();
+        if (gerenteItem == null) {
+            JOptionPane.showMessageDialog(this, "Selecione um gerente.", "Aviso",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        UUID      gerenteId = gerenteItem.id();
+        String    nome      = campNome.getText().trim();
+        String    desc      = campDesc.getText().trim();
+        LocalDate inicio    = DateUtils.parse(campInicio.getText());
+        LocalDate previsao  = DateUtils.parse(campPrevisao.getText());
+
+        final LocalDate[] dataFimHolder = {null};
+        if (novoStatus == StatusProjeto.CONCLUIDO) {
+            JFormattedTextField campFim = DateUtils.campData();
+            campFim.setText(DateUtils.format(LocalDate.now()));
+            while (true) {
+                int op = JOptionPane.showConfirmDialog(this, campFim,
+                        "Data de Encerramento (dd/MM/yyyy)",
+                        JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+                if (op != JOptionPane.OK_OPTION) return;
+                LocalDate dataFim = DateUtils.parse(campFim.getText());
+                if (dataFim == null) {
+                    JOptionPane.showMessageDialog(this, "Informe a data de encerramento.",
+                            "Erro", JOptionPane.ERROR_MESSAGE);
+                    continue;
+                }
+                dataFimHolder[0] = dataFim;
+                break;
+            }
+        }
+
+        Map<UUID, DadosTarefa> novas    = new LinkedHashMap<>(tarefasNovas);
+        Map<UUID, DadosTarefa> editadas = new LinkedHashMap<>(tarefasEditadas);
+        Set<UUID>              excluidas = new LinkedHashSet<>(tarefasExcluidas);
+
+        new SwingWorker<Void, Void>() {
+            @Override protected Void doInBackground() throws Exception {
+                // 1. Projeto
+                Projeto atual = projetoCtrl.buscarPorId(projetoId);
+                projetoCtrl.atualizarProjeto(projetoId, nome, desc, inicio, previsao, gerenteId);
+                if (novoStatus == StatusProjeto.CONCLUIDO
+                        && atual.getStatus() != StatusProjeto.CONCLUIDO) {
+                    projetoCtrl.encerrarProjeto(projetoId, dataFimHolder[0]);
+                } else if (novoStatus != atual.getStatus()) {
+                    projetoCtrl.atualizarStatus(projetoId, novoStatus);
+                }
+                // 2. Novas tarefas
+                for (DadosTarefa d : novas.values()) {
+                    Tarefa t = tarefaCtrl.criarTarefa(d.nome(), d.descricao(),
+                            d.prazo(), projetoId, d.responsavelId());
+                    if (d.status() != StatusTarefa.PENDENTE) {
+                        tarefaCtrl.atualizarStatus(t.getId(), d.status());
+                    }
+                }
+                // 3. Tarefas editadas
+                for (Map.Entry<UUID, DadosTarefa> e : editadas.entrySet()) {
+                    UUID id = e.getKey(); DadosTarefa d = e.getValue();
+                    tarefaCtrl.atualizarTarefa(id, d.nome(), d.descricao(), d.prazo());
+                    tarefaCtrl.reatribuirResponsavel(id, d.responsavelId());
+                    Tarefa t = tarefaCtrl.buscarPorId(id).orElseThrow();
+                    if (t.getStatus() != d.status()) {
+                        tarefaCtrl.atualizarStatus(id, d.status());
+                    }
+                }
+                // 4. Tarefas excluídas
+                for (UUID id : excluidas) {
+                    tarefaCtrl.removerTarefa(id);
+                }
+                return null;
+            }
+            @Override protected void done() {
+                try {
+                    get();
+                    tarefasNovas.clear();
+                    tarefasEditadas.clear();
+                    tarefasExcluidas.clear();
+                    if (onSalvar != null) onSalvar.run();
+                    carregarProjeto();
+                    carregarTarefas();
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(GestaoProjetoPanel.this,
+                            ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }.execute();
+    }
+
     private void cancelar()   { /* Task 8 */ }
 
     private DadosTarefa dadosParaStaging(UUID uuid, int row) {
