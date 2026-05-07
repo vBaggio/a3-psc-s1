@@ -550,18 +550,30 @@ public class GestaoProjetoPanel extends JPanel {
     private void excluirTarefa() {
         int linha = tabelaTarefas.getSelectedRow();
         if (linha < 0) return;
+        UUID uuid = UUID.fromString(modeloTarefas.getValueAt(linha, 0).toString());
         String nome = modeloTarefas.getValueAt(linha, 1).toString();
+
         int conf = JOptionPane.showConfirmDialog(this,
                 "Excluir a tarefa '" + nome + "'?",
                 "Confirmar", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
         if (conf != JOptionPane.YES_OPTION) return;
-        UUID id = UUID.fromString(modeloTarefas.getValueAt(linha, 0).toString());
-        try {
-            tarefaCtrl.removerTarefa(id);
-            carregarTarefas();
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+
+        if (tarefasNovas.containsKey(uuid)) {
+            tarefasNovas.remove(uuid);
+        } else {
+            StatusTarefa status = (StatusTarefa) modeloTarefas.getValueAt(linha, 2);
+            if (status == StatusTarefa.EM_ANDAMENTO || status == StatusTarefa.CONCLUIDA) {
+                JOptionPane.showMessageDialog(this,
+                        "Apenas tarefas PENDENTE ou CANCELADA podem ser removidas.",
+                        "Erro", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            tarefasEditadas.remove(uuid);
+            tarefasExcluidas.add(uuid);
         }
+
+        modeloTarefas.removeRow(linha);
+        atualizarContagem();
     }
 
     // ------------------------------------------------------------------
