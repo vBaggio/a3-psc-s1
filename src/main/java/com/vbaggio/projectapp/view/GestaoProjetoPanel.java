@@ -103,7 +103,8 @@ public class GestaoProjetoPanel extends JPanel {
         JPanel bloco = new JPanel(new BorderLayout(0, 4));
         bloco.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createMatteBorder(1, 0, 0, 0,
-                        UIManager.getColor("Separator.foreground")),
+                        java.util.Objects.requireNonNullElse(
+                                UIManager.getColor("Separator.foreground"), java.awt.Color.GRAY)),
                 BorderFactory.createEmptyBorder(4, 8, 8, 8)));
 
         // header label
@@ -174,7 +175,8 @@ public class GestaoProjetoPanel extends JPanel {
         JPanel rodape = new JPanel(new BorderLayout());
         rodape.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createMatteBorder(1, 0, 0, 0,
-                        UIManager.getColor("Separator.foreground")),
+                        java.util.Objects.requireNonNullElse(
+                                UIManager.getColor("Separator.foreground"), java.awt.Color.GRAY)),
                 BorderFactory.createEmptyBorder(6, 8, 8, 8)));
         rodape.add(direita, BorderLayout.EAST);
         return rodape;
