@@ -59,4 +59,5 @@ public class Projeto {
     public void setStatus(StatusProjeto status) { this.status = status; }
     public Usuario getGerente() { return gerente; }
     public void setGerente(Usuario gerente) { this.gerente = gerente; }
+    public List<Tarefa> getTarefas() { return tarefas; }
 }

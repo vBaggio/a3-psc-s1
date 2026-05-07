@@ -30,7 +30,7 @@ public class ProjetoController {
         this.projetoRepo      = new ProjetoRepository();
         this.usuarioRepo      = new UsuarioRepository();
         this.equipeRepo       = new EquipeRepository();
-        this.tarefaRepo = new TarefaRepository();
+        this.tarefaRepo       = new TarefaRepository();
     }
 
     /**

@@ -11,6 +11,9 @@ import com.vbaggio.projectapp.util.OpcaoItem;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
@@ -54,12 +57,11 @@ public class ProjetoPanel extends JPanel {
                 if (e.getClickCount() == 2 && tabela.getSelectedRow() >= 0) abrirGestao();
             }
         });
-        tabela.addKeyListener(new java.awt.event.KeyAdapter() {
-            @Override
-            public void keyPressed(java.awt.event.KeyEvent e) {
-                if (e.getKeyCode() == java.awt.event.KeyEvent.VK_DELETE && tabela.getSelectedRow() >= 0) {
-                    excluir();
-                }
+        tabela.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+              .put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "excluir");
+        tabela.getActionMap().put("excluir", new AbstractAction() {
+            @Override public void actionPerformed(ActionEvent e) {
+                if (tabela.getSelectedRow() >= 0) excluir();
             }
         });
         carregar();
@@ -157,7 +159,6 @@ public class ProjetoPanel extends JPanel {
         janela.setLocationRelativeTo(this);
         janela.add(new GestaoProjetoPanel(id, this::carregar));
         final UUID fId = id;
-        final JFrame ref = janela;
         janela.addWindowListener(new WindowAdapter() {
             @Override public void windowClosed(WindowEvent e) {
                 janelasGestao.remove(fId);
@@ -171,12 +172,21 @@ public class ProjetoPanel extends JPanel {
     private void excluir() {
         int linha = tabela.getSelectedRow();
         if (linha < 0) return;
+        UUID id = UUID.fromString(modelo.getValueAt(linha, 0).toString());
         String nome = modelo.getValueAt(linha, 1).toString();
+
+        JFrame janelaAberta = janelasGestao.get(id);
+        if (janelaAberta != null && janelaAberta.isDisplayable()) {
+            JOptionPane.showMessageDialog(this,
+                    "Feche a janela de gerenciamento deste projeto antes de excluí-lo.",
+                    "Aviso", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
         int conf = JOptionPane.showConfirmDialog(this,
                 "Excluir o projeto '" + nome + "' e todas as suas tarefas?\nEsta ação não pode ser desfeita.",
                 "Confirmar Exclusão", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
         if (conf != JOptionPane.YES_OPTION) return;
-        UUID id = UUID.fromString(modelo.getValueAt(linha, 0).toString());
         try {
             ctrl.removerProjeto(id);
             carregar();
