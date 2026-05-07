@@ -42,11 +42,23 @@ Após análise UX realizada no decorrer da sprint, foram identificados problemas
 
 ---
 
+## Fase 3 — Save Atômico no GestaoProjetoPanel
+
+Após análise crítica da UX pós-Fase 2, identificou-se que o botão "Salvar Projeto" posicionado entre o formulário e a tabela de tarefas criava uma quebra semântica: o projeto e suas tarefas pareciam entidades independentes quando deveriam ser salvas como uma unidade. Cada operação de tarefa (criar, editar, excluir, mudar status) também persistia imediatamente no banco, sem relação com o salvamento do projeto. A decisão foi tornar a tela atômica.
+
+| ID | Descrição da Tarefa | Status |
+|----|----------------------|--------|
+| **TSK-21** | Análise UX, brainstorming e especificação do modelo de save atômico: botão único `Salvar` no rodapé inferior direito, botão `Cancelar` ao lado, staging em memória via três coleções (`tarefasNovas`, `tarefasEditadas`, `tarefasExcluidas`), aviso "alterações não salvas" ao fechar janela, campo `Status` adicionado ao diálogo de edição de tarefa. | ✅ Concluído |
+| **TSK-22** | Implementação do save atômico: criação do record `DadosTarefa`, refatoração de `novaTarefa()` / `editarTarefa()` / `excluirTarefa()` / editor inline de status para operar sobre staging em vez do banco; `salvarTudo()` via `SwingWorker` persiste projeto + todas as mudanças de tarefa atomicamente; `cancelar()` descarta staging e recarrega do banco; `ProjetoPanel.abrirGestao()` intercepta fechamento da janela com diálogo de confirmação quando há alterações pendentes. | ✅ Concluído |
+| **TSK-23** | Bugfix: `getSelectedRow()` / `getEditingRow()` retornam índice de *view*, mas `DefaultTableModel` espera índice de *model* — divergem quando o `RowSorter` está ativo. Aplicado `convertRowIndexToModel()` em todos os pontos de acesso ao modelo (`editarTarefa`, `excluirTarefa`, `stopCellEditing`). | ✅ Concluído |
+
+---
+
 ## Ferramentas e Componentes Adotados na Sprint
 
 - **Interface Gráfica:** Java Swing (javax.swing)
 - **Look & Feel:** FlatLaf 3.4.1 (`FlatDarkLaf`) — herdado das sprints anteriores
-- **Componentes novos:** `DefaultCellEditor` com `JComboBox` para edição inline, `InputMap`/`ActionMap` para atalhos de teclado, `WindowAdapter` para ciclo de vida de janelas filhas
+- **Componentes novos:** `DefaultCellEditor` com `JComboBox` para edição inline, `InputMap`/`ActionMap` para atalhos de teclado, `WindowAdapter` para ciclo de vida de janelas filhas, `Map<UUID, DadosTarefa>` + `Set<UUID>` como staging em memória
 - **Padrão assíncrono:** `SwingWorker<T, Void>` para todos os acessos JPA e operações de escrita
 - **Controle de versão:** Git rebase local para remoção de commits conflitantes antes do redesign
 - **Build:** Apache Maven 3.x

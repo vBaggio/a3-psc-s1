@@ -87,6 +87,8 @@ Implementação da camada de relatórios analíticos sem alterações no banco d
 
 #### Sprint 7 — Qualidade de UI & Redesign do Módulo de Projetos `03/05 – 07/05/2026` ✅
 Melhorias transversais de qualidade de interface (`SwingWorker` em todos os painéis, double-click para edição, botões contextuais, empty state em tabelas, ordenação por coluna, formatação de enums e datas) seguidas de um redesign estrutural do módulo de projetos e tarefas. Criação do `GestaoProjetoPanel` — tela unificada que combina o formulário do projeto com gestão das suas tarefas, incluindo edição inline de status via `TableCellEditor`. Remoção do `TarefaPanel` como módulo autônomo. Grade do `HomePanel` reorganizada para `3 + 2` e botão `Sair` relocado para o rodapé com o nome do usuário logado. Commits conflitantes removidos via rebase local antes da implementação.
+
+Fase final: `GestaoProjetoPanel` refatorado para **save atômico**. Operações de tarefa (criar, editar, excluir, alterar status) passaram a operar sobre staging em memória — três coleções (`tarefasNovas`, `tarefasEditadas`, `tarefasExcluidas`) rastreiam o estado pendente. Um único `Salvar` no rodapé persiste o projeto e todas as mudanças de tarefa via `SwingWorker`. Introdução do record `DadosTarefa` como unidade de staging. Aviso de alterações não salvas ao fechar a janela de gestão. Bugfix de índice view/model (`convertRowIndexToModel`) ao acessar `DefaultTableModel` com `RowSorter` ativo.
 - 👉 [Sprint Backlog](docs/sprints/sprint-07/backlog.md)
 - 👉 [Relatório de Desenvolvimento](docs/sprints/sprint-07/relatorio.md)
 
