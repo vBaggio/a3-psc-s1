@@ -3,6 +3,8 @@ package com.vbaggio.projectapp.model.entity;
 import com.vbaggio.projectapp.model.enums.StatusProjeto;
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -36,6 +38,9 @@ public class Projeto {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "gerente_id")
     private Usuario gerente;
+
+    @OneToMany(mappedBy = "projeto", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Tarefa> tarefas = new ArrayList<>();
 
     public Projeto() {}
 

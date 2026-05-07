@@ -189,6 +189,16 @@ public class ProjetoController {
     }
 
     /**
+     * Remove um projeto e todas as suas tarefas (cascade).
+     *
+     * @param id UUID do projeto a ser excluído
+     */
+    public void removerProjeto(UUID id) {
+        buscarPorId(id); // valida existência
+        projetoRepo.deletar(id);
+    }
+
+    /**
      * Retorna todos os projetos cadastrados.
      *
      * @return lista de projetos ordenada por nome

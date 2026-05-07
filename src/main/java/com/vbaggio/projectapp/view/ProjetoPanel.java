@@ -5,7 +5,6 @@ import com.vbaggio.projectapp.controller.UsuarioController;
 import com.vbaggio.projectapp.model.entity.Projeto;
 import com.vbaggio.projectapp.model.entity.Usuario;
 import com.vbaggio.projectapp.model.enums.Perfil;
-import com.vbaggio.projectapp.model.enums.StatusProjeto;
 import com.vbaggio.projectapp.util.DateUtils;
 import com.vbaggio.projectapp.util.OpcaoItem;
 
@@ -14,8 +13,12 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static com.vbaggio.projectapp.view.TableUtils.tabelaComMensagem;
@@ -31,6 +34,7 @@ public class ProjetoPanel extends JPanel {
     };
     private final JTable tabela = tabelaComMensagem(modelo, "Nenhum projeto cadastrado. Clique em 'Novo' para começar.");
     private boolean scrollParaFim = false;
+    private final Map<UUID, JFrame> janelasGestao = new HashMap<>();
 
     public ProjetoPanel() {
         setLayout(new BorderLayout(0, 4));
@@ -47,7 +51,15 @@ public class ProjetoPanel extends JPanel {
         tabela.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if (e.getClickCount() == 2 && tabela.getSelectedRow() >= 0) abrirEdicao();
+                if (e.getClickCount() == 2 && tabela.getSelectedRow() >= 0) abrirGestao();
+            }
+        });
+        tabela.addKeyListener(new java.awt.event.KeyAdapter() {
+            @Override
+            public void keyPressed(java.awt.event.KeyEvent e) {
+                if (e.getKeyCode() == java.awt.event.KeyEvent.VK_DELETE && tabela.getSelectedRow() >= 0) {
+                    excluir();
+                }
             }
         });
         carregar();
@@ -55,40 +67,28 @@ public class ProjetoPanel extends JPanel {
 
     private JPanel criarToolbar() {
         JPanel bar = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
-        JButton btnNovo     = new JButton("Novo");
-        JButton btnEditar   = new JButton("Editar");
-        JButton btnStatus   = new JButton("Alterar Status");
-        JButton btnEncerrar = new JButton("Encerrar");
+        JButton btnNovo      = new JButton("Novo");
+        JButton btnGerenciar = new JButton("Gerenciar");
+        JButton btnExcluir   = new JButton("Excluir");
 
-        btnEditar.setEnabled(false);
-        btnStatus.setEnabled(false);
-        btnEncerrar.setEnabled(false);
+        btnGerenciar.setEnabled(false);
+        btnExcluir.setEnabled(false);
 
-        bar.add(btnNovo); bar.add(btnEditar); bar.add(btnStatus); bar.add(btnEncerrar);
+        bar.add(btnNovo); bar.add(btnGerenciar); bar.add(btnExcluir);
 
         btnNovo.setToolTipText("Criar novo projeto");
-        btnEditar.setToolTipText("Editar projeto selecionado");
-        btnStatus.setToolTipText("Alterar status do projeto selecionado");
-        btnEncerrar.setToolTipText("Registrar data de encerramento e concluir projeto");
+        btnGerenciar.setToolTipText("Gerenciar projeto, status e tarefas");
+        btnExcluir.setToolTipText("Excluir projeto e suas tarefas");
 
         btnNovo.addActionListener(e -> abrirFormulario());
-        btnEditar.addActionListener(e -> abrirEdicao());
-        btnStatus.addActionListener(e -> alterarStatus());
-        btnEncerrar.addActionListener(e -> encerrar());
+        btnGerenciar.addActionListener(e -> abrirGestao());
+        btnExcluir.addActionListener(e -> excluir());
 
         tabela.getSelectionModel().addListSelectionListener(e -> {
             if (e.getValueIsAdjusting()) return;
-            int row = tabela.getSelectedRow();
-            if (row < 0) {
-                btnEditar.setEnabled(false);
-                btnStatus.setEnabled(false);
-                btnEncerrar.setEnabled(false);
-                return;
-            }
-            StatusProjeto s = (StatusProjeto) modelo.getValueAt(row, 2);
-            btnEditar.setEnabled(s != StatusProjeto.CONCLUIDO && s != StatusProjeto.CANCELADO);
-            btnStatus.setEnabled(s.proximosStatus().length > 0);
-            btnEncerrar.setEnabled(s == StatusProjeto.EM_ANDAMENTO);
+            boolean sel = tabela.getSelectedRow() >= 0;
+            btnGerenciar.setEnabled(sel);
+            btnExcluir.setEnabled(sel);
         });
 
         return bar;
@@ -139,112 +139,49 @@ public class ProjetoPanel extends JPanel {
         }
     }
 
-    private void abrirEdicao() {
+    private void abrirGestao() {
         int linha = tabela.getSelectedRow();
-        if (linha < 0) { JOptionPane.showMessageDialog(this, "Selecione um projeto."); return; }
-        UUID id = UUID.fromString((String) modelo.getValueAt(linha, 0));
-        Projeto p = ctrl.buscarPorId(id);
+        if (linha < 0) return;
+        UUID id   = UUID.fromString(modelo.getValueAt(linha, 0).toString());
+        String nome = modelo.getValueAt(linha, 1).toString();
 
-        List<Usuario> gerentes = usuarioCtrl.listarPorPerfil(Perfil.GERENTE);
-        if (gerentes.isEmpty()) {
-            JOptionPane.showMessageDialog(this,
-                    "Não há usuários com perfil GERENTE cadastrados.", "Aviso", JOptionPane.WARNING_MESSAGE);
-            return;
+        JFrame janela = janelasGestao.get(id);
+        if (janela != null && janela.isDisplayable()) {
+            janela.toFront(); janela.requestFocus(); return;
         }
 
-        JTextField campNome = new JTextField(p.getNome(), 24);
-        JTextArea campDesc  = new JTextArea(p.getDescricao() != null ? p.getDescricao() : "", 3, 24);
-        campDesc.setLineWrap(true); campDesc.setWrapStyleWord(true);
-        JFormattedTextField campInicio   = DateUtils.campData();
-        JFormattedTextField campPrevisao = DateUtils.campData();
-        if (p.getDataInicio()   != null) campInicio.setText(DateUtils.format(p.getDataInicio()));
-        if (p.getDataPrevisao() != null) campPrevisao.setText(DateUtils.format(p.getDataPrevisao()));
-
-        OpcaoItem[] opcoesGerente = gerentes.stream()
-                .map(u -> new OpcaoItem(u.getId(), u.getNome()))
-                .toArray(OpcaoItem[]::new);
-        JComboBox<OpcaoItem> comboGerente = new JComboBox<>(opcoesGerente);
-        if (p.getGerente() != null) {
-            for (int i = 0; i < opcoesGerente.length; i++) {
-                if (opcoesGerente[i].id().equals(p.getGerente().getId())) {
-                    comboGerente.setSelectedIndex(i); break;
-                }
-            }
-        }
-
-        JPanel form = montarForm(
-                "Nome:", campNome,
-                "Descrição:", new JScrollPane(campDesc),
-                "Início (dd/MM/yyyy):", campInicio,
-                "Previsão (dd/MM/yyyy):", campPrevisao,
-                "Gerente:", comboGerente);
-
-        while (true) {
-            int op = JOptionPane.showConfirmDialog(this, form, "Editar Projeto",
-                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-            if (op != JOptionPane.OK_OPTION) return;
-            try {
-                UUID gerenteId = ((OpcaoItem) comboGerente.getSelectedItem()).id();
-                ctrl.atualizarProjeto(id, campNome.getText().trim(), campDesc.getText().trim(),
-                        DateUtils.parse(campInicio.getText()),
-                        DateUtils.parse(campPrevisao.getText()),
-                        gerenteId);
+        janela = new JFrame("Gerenciar Projeto — " + nome);
+        janela.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        janela.setSize(820, 580);
+        janela.setMinimumSize(new Dimension(600, 420));
+        janela.setLocationRelativeTo(this);
+        janela.add(new GestaoProjetoPanel(id, this::carregar));
+        final UUID fId = id;
+        final JFrame ref = janela;
+        janela.addWindowListener(new WindowAdapter() {
+            @Override public void windowClosed(WindowEvent e) {
+                janelasGestao.remove(fId);
                 carregar();
-                return;
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
             }
-        }
+        });
+        janelasGestao.put(id, janela);
+        janela.setVisible(true);
     }
 
-    private void alterarStatus() {
+    private void excluir() {
         int linha = tabela.getSelectedRow();
-        if (linha < 0) { JOptionPane.showMessageDialog(this, "Selecione um projeto."); return; }
+        if (linha < 0) return;
+        String nome = modelo.getValueAt(linha, 1).toString();
+        int conf = JOptionPane.showConfirmDialog(this,
+                "Excluir o projeto '" + nome + "' e todas as suas tarefas?\nEsta ação não pode ser desfeita.",
+                "Confirmar Exclusão", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+        if (conf != JOptionPane.YES_OPTION) return;
         UUID id = UUID.fromString(modelo.getValueAt(linha, 0).toString());
-        StatusProjeto atual = (StatusProjeto) modelo.getValueAt(linha, 2);
-        StatusProjeto[] opcoes = atual.proximosStatus();
-        if (opcoes.length == 0) {
-            JOptionPane.showMessageDialog(this,
-                    "Projeto " + atual + " não permite alteração de status.",
-                    "Aviso", JOptionPane.INFORMATION_MESSAGE);
-            return;
-        }
-        StatusProjeto escolha = (StatusProjeto) JOptionPane.showInputDialog(
-                this, "Novo status:", "Alterar Status",
-                JOptionPane.PLAIN_MESSAGE, null, opcoes, opcoes[0]);
-        if (escolha == null) return;
         try {
-            ctrl.atualizarStatus(id, escolha);
+            ctrl.removerProjeto(id);
             carregar();
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private void encerrar() {
-        int linha = tabela.getSelectedRow();
-        if (linha < 0) { JOptionPane.showMessageDialog(this, "Selecione um projeto."); return; }
-        UUID id = UUID.fromString(modelo.getValueAt(linha, 0).toString());
-
-        JFormattedTextField campFim = DateUtils.campData();
-        campFim.setText(DateUtils.format(LocalDate.now()));
-
-        while (true) {
-            int op = JOptionPane.showConfirmDialog(this, campFim, "Data de Encerramento (dd/MM/yyyy)",
-                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-            if (op != JOptionPane.OK_OPTION) return;
-            try {
-                LocalDate dataFim = DateUtils.parse(campFim.getText());
-                if (dataFim == null) {
-                    JOptionPane.showMessageDialog(this, "Informe a data de encerramento.", "Erro", JOptionPane.ERROR_MESSAGE);
-                    continue;
-                }
-                ctrl.encerrarProjeto(id, dataFim);
-                carregar();
-                return;
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
-            }
         }
     }
 
