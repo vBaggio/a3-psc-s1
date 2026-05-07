@@ -34,6 +34,13 @@ public class UsuarioPanel extends JPanel {
         add(new JScrollPane(tabela), BorderLayout.CENTER);
 
         ocultarColuna(0);
+        tabela.setAutoCreateRowSorter(true);
+        tabela.getColumnModel().getColumn(1).setPreferredWidth(160);
+        tabela.getColumnModel().getColumn(2).setPreferredWidth(100);
+        tabela.getColumnModel().getColumn(3).setPreferredWidth(95);
+        tabela.getColumnModel().getColumn(4).setPreferredWidth(180);
+        tabela.getColumnModel().getColumn(5).setPreferredWidth(90);
+        tabela.getColumnModel().getColumn(6).setPreferredWidth(110);
         tabela.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {

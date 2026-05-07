@@ -35,6 +35,12 @@ public class EquipePanel extends JPanel {
 
         ocultarColuna(tabelaEquipes, 0);
         ocultarColuna(tabelaMembros, 0);
+        tabelaEquipes.setAutoCreateRowSorter(true);
+        tabelaEquipes.getColumnModel().getColumn(1).setPreferredWidth(160);
+        tabelaEquipes.getColumnModel().getColumn(2).setPreferredWidth(220);
+        tabelaMembros.setAutoCreateRowSorter(true);
+        tabelaMembros.getColumnModel().getColumn(1).setPreferredWidth(160);
+        tabelaMembros.getColumnModel().getColumn(2).setPreferredWidth(100);
 
         JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
                 criarPainelEquipes(), criarPainelMembros());

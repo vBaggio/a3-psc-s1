@@ -28,6 +28,8 @@ public class CargoPanel extends JPanel {
         add(new JScrollPane(tabela), BorderLayout.CENTER);
 
         ocultarColuna(0);
+        tabela.setAutoCreateRowSorter(true);
+        tabela.getColumnModel().getColumn(1).setPreferredWidth(320);
         tabela.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {

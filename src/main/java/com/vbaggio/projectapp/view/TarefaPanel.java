@@ -39,6 +39,11 @@ public class TarefaPanel extends JPanel {
         add(new JScrollPane(tabela), BorderLayout.CENTER);
         add(criarToolbar(),  BorderLayout.SOUTH);
         ocultarColuna(0);
+        tabela.setAutoCreateRowSorter(true);
+        tabela.getColumnModel().getColumn(1).setPreferredWidth(200);
+        tabela.getColumnModel().getColumn(2).setPreferredWidth(100);
+        tabela.getColumnModel().getColumn(3).setPreferredWidth(80);
+        tabela.getColumnModel().getColumn(4).setPreferredWidth(140);
         tabela.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
