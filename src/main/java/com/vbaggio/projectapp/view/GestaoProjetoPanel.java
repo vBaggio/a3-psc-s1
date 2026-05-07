@@ -229,25 +229,20 @@ public class GestaoProjetoPanel extends JPanel {
                 StatusTarefa novo = (StatusTarefa) getCellEditorValue();
                 int row = tabelaTarefas.getEditingRow();
                 if (row >= 0) {
-                    UUID id = UUID.fromString((String) modeloTarefas.getValueAt(row, 0));
+                    UUID uuid = UUID.fromString((String) modeloTarefas.getValueAt(row, 0));
                     StatusTarefa atual = (StatusTarefa) modeloTarefas.getValueAt(row, 2);
                     if (novo != atual) {
                         super.stopCellEditing();
-                        new SwingWorker<Void, Void>() {
-                            @Override protected Void doInBackground() throws Exception {
-                                tarefaCtrl.atualizarStatus(id, novo);
-                                return null;
-                            }
-                            @Override protected void done() {
-                                try {
-                                    get();
-                                } catch (Exception ex) {
-                                    JOptionPane.showMessageDialog(GestaoProjetoPanel.this,
-                                            ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
-                                }
-                                carregarTarefas();
-                            }
-                        }.execute();
+                        DadosTarefa base = dadosParaStaging(uuid, row);
+                        DadosTarefa atualizado = new DadosTarefa(
+                                base.nome(), base.descricao(), base.prazo(),
+                                base.responsavelId(), novo);
+                        if (tarefasNovas.containsKey(uuid)) {
+                            tarefasNovas.put(uuid, atualizado);
+                        } else {
+                            tarefasEditadas.put(uuid, atualizado);
+                        }
+                        atualizarContagem();
                         return true;
                     }
                 }
