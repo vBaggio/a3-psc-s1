@@ -410,31 +410,53 @@ public class GestaoProjetoPanel extends JPanel {
     // ------------------------------------------------------------------
 
     private void novaTarefa() {
-        JTextField campNome     = new JTextField(24);
-        JTextArea  campDesc     = new JTextArea(3, 24);
-        campDesc.setLineWrap(true); campDesc.setWrapStyleWord(true);
-        JFormattedTextField campPrazo = DateUtils.campData();
-        JComboBox<OpcaoItem> comboResp = montarComboResponsavel();
+        JTextField          campNomeTarefa = new JTextField(24);
+        JTextArea           campDescTarefa = new JTextArea(3, 24);
+        campDescTarefa.setLineWrap(true); campDescTarefa.setWrapStyleWord(true);
+        JFormattedTextField campPrazo      = DateUtils.campData();
+        JComboBox<OpcaoItem>    comboResp  = montarComboResponsavel();
+        JComboBox<StatusTarefa> comboSt    = new JComboBox<>();
+        comboSt.addItem(StatusTarefa.PENDENTE);
+        for (StatusTarefa prox : StatusTarefa.PENDENTE.proximosStatus()) comboSt.addItem(prox);
+        comboSt.setSelectedItem(StatusTarefa.PENDENTE);
 
         JPanel form = montarForm(
-                "Nome:", campNome,
-                "Descrição:", new JScrollPane(campDesc),
+                "Nome:",              campNomeTarefa,
+                "Descrição:",         new JScrollPane(campDescTarefa),
                 "Prazo (dd/MM/yyyy):", campPrazo,
-                "Responsável:", comboResp);
+                "Responsável:",       comboResp,
+                "Status:",            comboSt);
 
         while (true) {
             int op = JOptionPane.showConfirmDialog(this, form, "Nova Tarefa",
                     JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
             if (op != JOptionPane.OK_OPTION) return;
-            try {
-                tarefaCtrl.criarTarefa(campNome.getText().trim(), campDesc.getText().trim(),
-                        DateUtils.parse(campPrazo.getText()),
-                        projetoId, ((OpcaoItem) comboResp.getSelectedItem()).id());
-                carregarTarefas();
-                return;
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            String nome = campNomeTarefa.getText().trim();
+            if (nome.isBlank()) {
+                JOptionPane.showMessageDialog(this, "Nome da tarefa é obrigatório.",
+                        "Erro", JOptionPane.ERROR_MESSAGE);
+                continue;
             }
+            UUID      tempId = UUID.randomUUID();
+            OpcaoItem resp   = (OpcaoItem) comboResp.getSelectedItem();
+            DadosTarefa dados = new DadosTarefa(
+                    nome,
+                    campDescTarefa.getText().trim(),
+                    DateUtils.parse(campPrazo.getText()),
+                    resp != null ? resp.id() : null,
+                    (StatusTarefa) comboSt.getSelectedItem());
+            tarefasNovas.put(tempId, dados);
+            modeloTarefas.addRow(new Object[]{
+                    tempId.toString(),
+                    dados.nome(),
+                    dados.status(),
+                    DateUtils.format(dados.prazo()),
+                    resp != null && resp.id() != null ? resp.label() : "",
+                    resp != null && resp.id() != null ? resp.id().toString() : "",
+                    dados.descricao() != null ? dados.descricao() : ""
+            });
+            atualizarContagem();
+            return;
         }
     }
 
