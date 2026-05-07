@@ -227,8 +227,9 @@ public class GestaoProjetoPanel extends JPanel {
             @Override
             public boolean stopCellEditing() {
                 StatusTarefa novo = (StatusTarefa) getCellEditorValue();
-                int row = tabelaTarefas.getEditingRow();
-                if (row >= 0) {
+                int rowView = tabelaTarefas.getEditingRow();
+                if (rowView >= 0) {
+                    int row = tabelaTarefas.convertRowIndexToModel(rowView);
                     UUID uuid = UUID.fromString((String) modeloTarefas.getValueAt(row, 0));
                     StatusTarefa atual = (StatusTarefa) modeloTarefas.getValueAt(row, 2);
                     if (novo != atual) {
@@ -509,8 +510,9 @@ public class GestaoProjetoPanel extends JPanel {
     }
 
     private void editarTarefa() {
-        int linha = tabelaTarefas.getSelectedRow();
-        if (linha < 0) return;
+        int linhaView = tabelaTarefas.getSelectedRow();
+        if (linhaView < 0) return;
+        int linha = tabelaTarefas.convertRowIndexToModel(linhaView);
         UUID uuid = UUID.fromString((String) modeloTarefas.getValueAt(linha, 0));
 
         DadosTarefa base = dadosParaStaging(uuid, linha);
@@ -580,8 +582,9 @@ public class GestaoProjetoPanel extends JPanel {
     }
 
     private void excluirTarefa() {
-        int linha = tabelaTarefas.getSelectedRow();
-        if (linha < 0) return;
+        int linhaView = tabelaTarefas.getSelectedRow();
+        if (linhaView < 0) return;
+        int linha = tabelaTarefas.convertRowIndexToModel(linhaView);
         UUID uuid = UUID.fromString(modeloTarefas.getValueAt(linha, 0).toString());
         String nome = modeloTarefas.getValueAt(linha, 1).toString();
 
