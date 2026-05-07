@@ -269,14 +269,23 @@ public class TarefaPanel extends JPanel {
         OpcaoItem projetoSel = (OpcaoItem) comboProjeto.getSelectedItem();
         if (projetoSel == null) return;
         UUID projetoId = projetoSel.id();
-        modelo.setRowCount(0);
-        for (Tarefa t : ctrl.listarPorProjeto(projetoId)) {
-            modelo.addRow(new Object[]{
-                    t.getId().toString(), t.getNome(), t.getStatus(),
-                    DateUtils.format(t.getPrazo()),
-                    t.getResponsavel() != null ? t.getResponsavel().getNome() : ""
-            });
-        }
+        new SwingWorker<List<Tarefa>, Void>() {
+            @Override protected List<Tarefa> doInBackground() { return ctrl.listarPorProjeto(projetoId); }
+            @Override protected void done() {
+                try {
+                    modelo.setRowCount(0);
+                    for (Tarefa t : get()) {
+                        modelo.addRow(new Object[]{
+                                t.getId().toString(), t.getNome(), t.getStatus(),
+                                DateUtils.format(t.getPrazo()),
+                                t.getResponsavel() != null ? t.getResponsavel().getNome() : ""
+                        });
+                    }
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(TarefaPanel.this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }.execute();
     }
 
     private static JPanel montarForm(Object... labelsECampos) {

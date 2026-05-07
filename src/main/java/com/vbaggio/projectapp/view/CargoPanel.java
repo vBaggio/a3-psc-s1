@@ -111,11 +111,17 @@ public class CargoPanel extends JPanel {
     }
 
     private void carregar() {
-        modelo.setRowCount(0);
-        List<Cargo> cargos = ctrl.listarCargos();
-        for (Cargo c : cargos) {
-            modelo.addRow(new Object[]{c.getId().toString(), c.getNome()});
-        }
+        new SwingWorker<List<Cargo>, Void>() {
+            @Override protected List<Cargo> doInBackground() { return ctrl.listarCargos(); }
+            @Override protected void done() {
+                try {
+                    modelo.setRowCount(0);
+                    for (Cargo c : get()) modelo.addRow(new Object[]{c.getId().toString(), c.getNome()});
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(CargoPanel.this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }.execute();
     }
 
     private void ocultarColuna(int col) {

@@ -234,15 +234,24 @@ public class ProjetoPanel extends JPanel {
     }
 
     private void carregar() {
-        modelo.setRowCount(0);
-        for (Projeto p : ctrl.listarProjetos()) {
-            modelo.addRow(new Object[]{
-                    p.getId().toString(), p.getNome(), p.getStatus(),
-                    DateUtils.format(p.getDataInicio()),
-                    DateUtils.format(p.getDataPrevisao()),
-                    p.getGerente() != null ? p.getGerente().getNome() : ""
-            });
-        }
+        new SwingWorker<List<Projeto>, Void>() {
+            @Override protected List<Projeto> doInBackground() { return ctrl.listarProjetos(); }
+            @Override protected void done() {
+                try {
+                    modelo.setRowCount(0);
+                    for (Projeto p : get()) {
+                        modelo.addRow(new Object[]{
+                                p.getId().toString(), p.getNome(), p.getStatus(),
+                                DateUtils.format(p.getDataInicio()),
+                                DateUtils.format(p.getDataPrevisao()),
+                                p.getGerente() != null ? p.getGerente().getNome() : ""
+                        });
+                    }
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(ProjetoPanel.this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }.execute();
     }
 
     private static JPanel montarForm(Object... labelsECampos) {

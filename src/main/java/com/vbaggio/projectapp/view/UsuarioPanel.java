@@ -163,18 +163,23 @@ public class UsuarioPanel extends JPanel {
     }
 
     private void carregar() {
-        modelo.setRowCount(0);
-        for (Usuario u : ctrl.listarUsuarios()) {
-            modelo.addRow(new Object[]{
-                    u.getId().toString(),
-                    u.getNome(),
-                    u.getLogin(),
-                    u.getCpf(),
-                    u.getEmail(),
-                    u.getPerfil(),
-                    u.getCargo() != null ? u.getCargo().getNome() : ""
-            });
-        }
+        new SwingWorker<List<Usuario>, Void>() {
+            @Override protected List<Usuario> doInBackground() { return ctrl.listarUsuarios(); }
+            @Override protected void done() {
+                try {
+                    modelo.setRowCount(0);
+                    for (Usuario u : get()) {
+                        modelo.addRow(new Object[]{
+                                u.getId().toString(), u.getNome(), u.getLogin(),
+                                u.getCpf(), u.getEmail(), u.getPerfil(),
+                                u.getCargo() != null ? u.getCargo().getNome() : ""
+                        });
+                    }
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(UsuarioPanel.this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }.execute();
     }
 
     private void ocultarColuna(int col) {
