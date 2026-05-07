@@ -3,6 +3,7 @@ context/
 
 # Arquivos internos de planejamento (superpowers/Claude)
 docs/superpowers/
+.superpowers/
 
 # Build e Compilados do Java (Maven)
 target/
