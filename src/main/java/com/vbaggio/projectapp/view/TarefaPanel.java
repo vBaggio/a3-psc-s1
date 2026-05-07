@@ -53,14 +53,8 @@ public class TarefaPanel extends JPanel {
             }
         });
 
-        if (projetoFixo != null) {
-            comboProjeto.addItem(new OpcaoItem(projetoFixo, labelProjeto));
-            comboProjeto.setEnabled(false);
-            carregarTarefas();
-        } else {
-            carregarComboProjeto();
-            comboProjeto.addActionListener(e -> carregarTarefas());
-        }
+        carregarComboProjeto();
+        comboProjeto.addActionListener(e -> carregarTarefas());
     }
 
     private JPanel criarFiltro() {
