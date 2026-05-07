@@ -15,6 +15,8 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.UUID;
 
+import static com.vbaggio.projectapp.view.TableUtils.tabelaComMensagem;
+
 public class UsuarioPanel extends JPanel {
 
     private final UsuarioController ctrl      = new UsuarioController();
@@ -24,7 +26,7 @@ public class UsuarioPanel extends JPanel {
             new String[]{"ID", "Nome", "Login", "CPF", "E-mail", "Perfil", "Cargo"}, 0) {
         @Override public boolean isCellEditable(int r, int c) { return false; }
     };
-    private final JTable tabela = new JTable(modelo);
+    private final JTable tabela = tabelaComMensagem(modelo, "Nenhum usuário cadastrado.");
 
     public UsuarioPanel() {
         setLayout(new BorderLayout(0, 4));

@@ -18,6 +18,8 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.UUID;
 
+import static com.vbaggio.projectapp.view.TableUtils.tabelaComMensagem;
+
 public class TarefaPanel extends JPanel {
 
     private final TarefaController  ctrl        = new TarefaController();
@@ -28,7 +30,7 @@ public class TarefaPanel extends JPanel {
             new String[]{"ID", "Nome", "Status", "Prazo", "Responsável"}, 0) {
         @Override public boolean isCellEditable(int r, int c) { return false; }
     };
-    private final JTable tabela = new JTable(modelo);
+    private final JTable tabela = tabelaComMensagem(modelo, "Nenhuma tarefa para este projeto.");
 
     private final JComboBox<OpcaoItem> comboProjeto = new JComboBox<>();
 

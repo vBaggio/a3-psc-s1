@@ -12,6 +12,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
+import static com.vbaggio.projectapp.view.TableUtils.tabelaComMensagem;
+
 public class EquipePanel extends JPanel {
 
     private final EquipeController  ctrl        = new EquipeController();
@@ -21,13 +23,13 @@ public class EquipePanel extends JPanel {
             new String[]{"ID", "Nome", "Descrição"}, 0) {
         @Override public boolean isCellEditable(int r, int c) { return false; }
     };
-    private final JTable tabelaEquipes = new JTable(modeloEquipes);
+    private final JTable tabelaEquipes = tabelaComMensagem(modeloEquipes, "Nenhuma equipe cadastrada.");
 
     private final DefaultTableModel modeloMembros = new DefaultTableModel(
             new String[]{"ID", "Nome", "Login"}, 0) {
         @Override public boolean isCellEditable(int r, int c) { return false; }
     };
-    private final JTable tabelaMembros = new JTable(modeloMembros);
+    private final JTable tabelaMembros = tabelaComMensagem(modeloMembros, "Selecione uma equipe para ver os membros.");
 
     public EquipePanel() {
         setLayout(new BorderLayout(0, 4));

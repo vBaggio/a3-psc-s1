@@ -18,6 +18,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
+import static com.vbaggio.projectapp.view.TableUtils.tabelaComMensagem;
+
 public class ProjetoPanel extends JPanel {
 
     private final ProjetoController ctrl        = new ProjetoController();
@@ -27,7 +29,7 @@ public class ProjetoPanel extends JPanel {
             new String[]{"ID", "Nome", "Status", "Início", "Previsão", "Gerente"}, 0) {
         @Override public boolean isCellEditable(int r, int c) { return false; }
     };
-    private final JTable tabela = new JTable(modelo);
+    private final JTable tabela = tabelaComMensagem(modelo, "Nenhum projeto cadastrado. Clique em 'Novo' para começar.");
 
     public ProjetoPanel() {
         setLayout(new BorderLayout(0, 4));
