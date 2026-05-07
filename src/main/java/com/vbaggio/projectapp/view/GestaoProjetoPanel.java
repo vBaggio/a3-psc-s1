@@ -46,7 +46,7 @@ public class GestaoProjetoPanel extends JPanel {
 
     // Task table
     private final DefaultTableModel modeloTarefas = new DefaultTableModel(
-            new String[]{"ID", "Nome", "Status", "Prazo", "Responsável"}, 0) {
+            new String[]{"ID", "Nome", "Status", "Prazo", "Responsável", "RespID", "Desc"}, 0) {
         @Override public boolean isCellEditable(int r, int c) { return c == 2; }
     };
     private final JTable tabelaTarefas = TableUtils.tabelaComMensagem(
@@ -68,6 +68,7 @@ public class GestaoProjetoPanel extends JPanel {
         setLayout(new BorderLayout(0, 0));
         add(criarBlocoProjet(),  BorderLayout.NORTH);
         add(criarBlocoTarefas(), BorderLayout.CENTER);
+        add(criarRodape(),       BorderLayout.SOUTH);
         configurarTabela();
         carregarProjeto();
         carregarTarefas();
@@ -80,9 +81,6 @@ public class GestaoProjetoPanel extends JPanel {
     private JPanel criarBlocoProjet() {
         campDesc.setLineWrap(true); campDesc.setWrapStyleWord(true);
 
-        JButton btnSalvar = new JButton("Salvar Projeto");
-        btnSalvar.addActionListener(e -> salvarProjeto());
-
         JPanel form = montarForm(
                 "Nome:",                  campNome,
                 "Descrição:",             new JScrollPane(campDesc),
@@ -91,13 +89,9 @@ public class GestaoProjetoPanel extends JPanel {
                 "Início (dd/MM/yyyy):",   campInicio,
                 "Previsão (dd/MM/yyyy):", campPrevisao);
 
-        JPanel rodape = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-        rodape.add(btnSalvar);
-
         JPanel bloco = new JPanel(new BorderLayout(0, 4));
         bloco.setBorder(BorderFactory.createEmptyBorder(8, 8, 4, 8));
-        bloco.add(form,   BorderLayout.CENTER);
-        bloco.add(rodape, BorderLayout.SOUTH);
+        bloco.add(form, BorderLayout.CENTER);
         return bloco;
     }
 
@@ -167,6 +161,25 @@ public class GestaoProjetoPanel extends JPanel {
         return bloco;
     }
 
+    private JPanel criarRodape() {
+        JButton btnCancelar = new JButton("Cancelar");
+        JButton btnSalvar   = new JButton("Salvar");
+        btnCancelar.addActionListener(e -> cancelar());
+        btnSalvar.addActionListener(e -> salvarTudo());
+
+        JPanel direita = new JPanel(new FlowLayout(FlowLayout.RIGHT, 4, 0));
+        direita.add(btnCancelar);
+        direita.add(btnSalvar);
+
+        JPanel rodape = new JPanel(new BorderLayout());
+        rodape.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(1, 0, 0, 0,
+                        UIManager.getColor("Separator.foreground")),
+                BorderFactory.createEmptyBorder(6, 8, 8, 8)));
+        rodape.add(direita, BorderLayout.EAST);
+        return rodape;
+    }
+
     // ------------------------------------------------------------------
     // Table configuration — inline status editor
     // ------------------------------------------------------------------
@@ -176,6 +189,12 @@ public class GestaoProjetoPanel extends JPanel {
         tabelaTarefas.getColumnModel().getColumn(0).setMinWidth(0);
         tabelaTarefas.getColumnModel().getColumn(0).setMaxWidth(0);
         tabelaTarefas.getColumnModel().getColumn(0).setWidth(0);
+        tabelaTarefas.getColumnModel().getColumn(5).setMinWidth(0);
+        tabelaTarefas.getColumnModel().getColumn(5).setMaxWidth(0);
+        tabelaTarefas.getColumnModel().getColumn(5).setWidth(0);
+        tabelaTarefas.getColumnModel().getColumn(6).setMinWidth(0);
+        tabelaTarefas.getColumnModel().getColumn(6).setMaxWidth(0);
+        tabelaTarefas.getColumnModel().getColumn(6).setWidth(0);
 
         tabelaTarefas.setAutoCreateRowSorter(true);
         tabelaTarefas.getColumnModel().getColumn(1).setPreferredWidth(200);
@@ -351,17 +370,18 @@ public class GestaoProjetoPanel extends JPanel {
                 try {
                     modeloTarefas.setRowCount(0);
                     List<Tarefa> tarefas = get();
-                    long concluidas = tarefas.stream()
-                            .filter(t -> t.getStatus() == StatusTarefa.CONCLUIDA).count();
                     for (Tarefa t : tarefas) {
                         modeloTarefas.addRow(new Object[]{
-                                t.getId().toString(), t.getNome(), t.getStatus(),
-                                DateUtils.format(t.getPrazo()),
-                                t.getResponsavel() != null ? t.getResponsavel().getNome() : ""
+                            t.getId().toString(),
+                            t.getNome(),
+                            t.getStatus(),
+                            DateUtils.format(t.getPrazo()),
+                            t.getResponsavel() != null ? t.getResponsavel().getNome() : "",
+                            t.getResponsavel() != null ? t.getResponsavel().getId().toString() : "",
+                            t.getDescricao() != null ? t.getDescricao() : ""
                         });
                     }
-                    lblContagem.setText("Tarefas (" + tarefas.size() + " total · "
-                            + concluidas + " concluída" + (concluidas != 1 ? "s" : "") + ")");
+                    atualizarContagem();
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(GestaoProjetoPanel.this,
                             ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
@@ -369,6 +389,19 @@ public class GestaoProjetoPanel extends JPanel {
             }
         }.execute();
     }
+
+    private void atualizarContagem() {
+        int total = modeloTarefas.getRowCount();
+        long concluidas = 0;
+        for (int i = 0; i < total; i++) {
+            if (modeloTarefas.getValueAt(i, 2) == StatusTarefa.CONCLUIDA) concluidas++;
+        }
+        lblContagem.setText("Tarefas (" + total + " total · "
+                + concluidas + " concluída" + (concluidas != 1 ? "s" : "") + ")");
+    }
+
+    private void salvarTudo() { /* Task 7 */ }
+    private void cancelar()   { /* Task 8 */ }
 
     // ------------------------------------------------------------------
     // Task CRUD
