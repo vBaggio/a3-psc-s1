@@ -18,7 +18,6 @@ public class HomePanel extends JPanel {
         new Color(52,  168,  83),   // Usuários    — verde
         new Color(154,  95, 229),   // Equipes     — roxo
         new Color(251, 140,   0),   // Projetos    — laranja
-        new Color(234,  67,  53),   // Tarefas     — vermelho
         new Color(96,  125, 139),   // Relatórios  — cinza-azulado
     };
 
@@ -62,14 +61,7 @@ public class HomePanel extends JPanel {
         centro.add(Box.createVerticalStrut(20));
         centro.add(sep);
 
-        JButton btnSair = new JButton("Sair");
-        btnSair.addActionListener(e -> frame.mostrarLogin());
-        JPanel painelSair = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-        painelSair.setOpaque(false);
-        painelSair.add(btnSair);
-
-        outer.add(centro,     BorderLayout.CENTER);
-        outer.add(painelSair, BorderLayout.EAST);
+        outer.add(centro, BorderLayout.CENTER);
         return outer;
     }
 
@@ -90,9 +82,8 @@ public class HomePanel extends JPanel {
         row1.add(card(2, "E", "Equipes",  "Times e alocações",       "equipes",  "Equipes",  EquipePanel::new,  new Dimension(780, 520)));
 
         JPanel row2 = fileira();
-        row2.add(card(3, "P", "Projetos",   "Ciclo de vida e status",   "projetos",   "Projetos",                 ProjetoPanel::new,   new Dimension(820, 520)));
-        row2.add(card(4, "T", "Tarefas",    "Acompanhamento e prazos",  "tarefas",    "Tarefas",                  TarefaPanel::new,    new Dimension(820, 520)));
-        row2.add(card(5, "R", "Relatórios", "Desempenho e métricas",    "relatorios", "Relatórios de Desempenho", RelatorioPanel::new, new Dimension(860, 540)));
+        row2.add(card(3, "P", "Projetos",   "Ciclo de vida e status",  "projetos",   "Projetos",                 ProjetoPanel::new,   new Dimension(820, 520)));
+        row2.add(card(4, "R", "Relatórios", "Desempenho e métricas",   "relatorios", "Relatórios de Desempenho", RelatorioPanel::new, new Dimension(860, 540)));
 
         inner.add(row1);
         inner.add(Box.createVerticalStrut(16));
@@ -210,9 +201,29 @@ public class HomePanel extends JPanel {
         esquerda.setFont(esquerda.getFont().deriveFont(11f));
         esquerda.setForeground(cor("Label.disabledForeground", new Color(128, 128, 128)));
 
-        JLabel direita = new JLabel("v1.0-SNAPSHOT");
-        direita.setFont(direita.getFont().deriveFont(11f));
-        direita.setForeground(cor("Label.disabledForeground", new Color(128, 128, 128)));
+        JPanel direita = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        direita.setOpaque(false);
+
+        JLabel lblUsuario = new JLabel(usuario.getNome());
+        lblUsuario.setFont(lblUsuario.getFont().deriveFont(11f));
+        lblUsuario.setForeground(cor("Label.disabledForeground", new Color(128, 128, 128)));
+
+        JLabel lblSep = new JLabel("·");
+        lblSep.setFont(lblSep.getFont().deriveFont(11f));
+        lblSep.setForeground(cor("Label.disabledForeground", new Color(128, 128, 128)));
+
+        JLabel lblVersao = new JLabel("v1.0-SNAPSHOT");
+        lblVersao.setFont(lblVersao.getFont().deriveFont(11f));
+        lblVersao.setForeground(cor("Label.disabledForeground", new Color(128, 128, 128)));
+
+        JButton btnSair = new JButton("Sair");
+        btnSair.setFont(btnSair.getFont().deriveFont(11f));
+        btnSair.addActionListener(e -> frame.mostrarLogin());
+
+        direita.add(lblUsuario);
+        direita.add(lblSep);
+        direita.add(lblVersao);
+        direita.add(btnSair);
 
         footer.add(esquerda, BorderLayout.WEST);
         footer.add(direita,  BorderLayout.EAST);
