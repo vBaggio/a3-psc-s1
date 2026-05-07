@@ -22,6 +22,7 @@ public class CargoPanel extends JPanel {
         @Override public boolean isCellEditable(int r, int c) { return false; }
     };
     private final JTable tabela = tabelaComMensagem(modelo, "Nenhum cargo cadastrado.");
+    private boolean scrollParaFim = false;
 
     public CargoPanel() {
         setLayout(new BorderLayout(0, 4));
@@ -91,6 +92,7 @@ public class CargoPanel extends JPanel {
             try {
                 if (cargo == null) {
                     ctrl.cadastrarCargo(campNome.getText().trim());
+                    scrollParaFim = true;
                 } else {
                     ctrl.atualizarNome(cargo.getId(), campNome.getText().trim());
                 }
@@ -126,8 +128,15 @@ public class CargoPanel extends JPanel {
                 try {
                     modelo.setRowCount(0);
                     for (Cargo c : get()) modelo.addRow(new Object[]{c.getId().toString(), c.getNome()});
+                    if (scrollParaFim && modelo.getRowCount() > 0) {
+                        int last = modelo.getRowCount() - 1;
+                        tabela.setRowSelectionInterval(last, last);
+                        tabela.scrollRectToVisible(tabela.getCellRect(last, 0, true));
+                    }
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(CargoPanel.this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+                } finally {
+                    scrollParaFim = false;
                 }
             }
         }.execute();

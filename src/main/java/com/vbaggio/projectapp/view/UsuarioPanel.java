@@ -27,6 +27,7 @@ public class UsuarioPanel extends JPanel {
         @Override public boolean isCellEditable(int r, int c) { return false; }
     };
     private final JTable tabela = tabelaComMensagem(modelo, "Nenhum usuário cadastrado.");
+    private boolean scrollParaFim = false;
 
     public UsuarioPanel() {
         setLayout(new BorderLayout(0, 4));
@@ -142,6 +143,7 @@ public class UsuarioPanel extends JPanel {
                             campNome.getText().trim(), campCpf.getText().trim(),
                             campEmail.getText().trim(), campLogin.getText().trim(),
                             senha, (Perfil) comboPerfil.getSelectedItem(), cargoSel);
+                    scrollParaFim = true;
                 } else {
                     ctrl.atualizarUsuario(
                             usuario.getId(),
@@ -188,8 +190,15 @@ public class UsuarioPanel extends JPanel {
                                 u.getCargo() != null ? u.getCargo().getNome() : ""
                         });
                     }
+                    if (scrollParaFim && modelo.getRowCount() > 0) {
+                        int last = modelo.getRowCount() - 1;
+                        tabela.setRowSelectionInterval(last, last);
+                        tabela.scrollRectToVisible(tabela.getCellRect(last, 0, true));
+                    }
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(UsuarioPanel.this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+                } finally {
+                    scrollParaFim = false;
                 }
             }
         }.execute();

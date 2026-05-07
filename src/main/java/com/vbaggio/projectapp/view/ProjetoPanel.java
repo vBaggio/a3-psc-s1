@@ -30,6 +30,7 @@ public class ProjetoPanel extends JPanel {
         @Override public boolean isCellEditable(int r, int c) { return false; }
     };
     private final JTable tabela = tabelaComMensagem(modelo, "Nenhum projeto cadastrado. Clique em 'Novo' para começar.");
+    private boolean scrollParaFim = false;
 
     public ProjetoPanel() {
         setLayout(new BorderLayout(0, 4));
@@ -69,7 +70,6 @@ public class ProjetoPanel extends JPanel {
         btnEditar.setToolTipText("Editar projeto selecionado");
         btnStatus.setToolTipText("Alterar status do projeto selecionado");
         btnEncerrar.setToolTipText("Registrar data de encerramento e concluir projeto");
-        btnTarefas.setToolTipText("Ver tarefas do projeto selecionado");
 
         btnNovo.addActionListener(e -> abrirFormulario());
         btnEditar.addActionListener(e -> abrirEdicao());
@@ -130,6 +130,7 @@ public class ProjetoPanel extends JPanel {
                         DateUtils.parse(campInicio.getText()),
                         DateUtils.parse(campPrevisao.getText()),
                         gerenteId);
+                scrollParaFim = true;
                 carregar();
                 return;
             } catch (Exception ex) {
@@ -261,8 +262,15 @@ public class ProjetoPanel extends JPanel {
                                 p.getGerente() != null ? p.getGerente().getNome() : ""
                         });
                     }
+                    if (scrollParaFim && modelo.getRowCount() > 0) {
+                        int last = modelo.getRowCount() - 1;
+                        tabela.setRowSelectionInterval(last, last);
+                        tabela.scrollRectToVisible(tabela.getCellRect(last, 0, true));
+                    }
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(ProjetoPanel.this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+                } finally {
+                    scrollParaFim = false;
                 }
             }
         }.execute();
