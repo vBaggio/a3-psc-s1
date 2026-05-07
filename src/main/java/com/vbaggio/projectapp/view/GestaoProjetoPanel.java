@@ -56,7 +56,7 @@ public class GestaoProjetoPanel extends JPanel {
     // Staging — changes not yet persisted
     private final Map<UUID, DadosTarefa> tarefasNovas     = new LinkedHashMap<>();
     private final Map<UUID, DadosTarefa> tarefasEditadas  = new LinkedHashMap<>();
-    private final Set<UUID>              tarefasExcluidas  = new LinkedHashSet<>();
+    private final Set<UUID>              tarefasExcluidas = new LinkedHashSet<>();
 
     public boolean temAlteracoesPendentes() {
         return !tarefasNovas.isEmpty() || !tarefasEditadas.isEmpty() || !tarefasExcluidas.isEmpty();
@@ -334,7 +334,8 @@ public class GestaoProjetoPanel extends JPanel {
         int total = modeloTarefas.getRowCount();
         long concluidas = 0;
         for (int i = 0; i < total; i++) {
-            if (modeloTarefas.getValueAt(i, 2) == StatusTarefa.CONCLUIDA) concluidas++;
+            Object v = modeloTarefas.getValueAt(i, 2);
+            if (v instanceof StatusTarefa s && s == StatusTarefa.CONCLUIDA) concluidas++;
         }
         lblContagem.setText("Tarefas (" + total + " total · "
                 + concluidas + " concluída" + (concluidas != 1 ? "s" : "") + ")");
@@ -380,6 +381,9 @@ public class GestaoProjetoPanel extends JPanel {
 
         new SwingWorker<Void, Void>() {
             @Override protected Void doInBackground() throws Exception {
+                // Note: These operations run without a DB transaction. A partial failure
+                // leaves earlier steps persisted. Retry may create duplicate tasks.
+                // Acceptable limitation for this scope — staging is preserved on error.
                 // 1. Projeto
                 Projeto atual = projetoCtrl.buscarPorId(projetoId);
                 projetoCtrl.atualizarProjeto(projetoId, nome, desc, inicio, previsao, gerenteId);
