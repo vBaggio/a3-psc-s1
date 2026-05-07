@@ -429,7 +429,13 @@ public class GestaoProjetoPanel extends JPanel {
         }.execute();
     }
 
-    private void cancelar()   { /* Task 8 */ }
+    private void cancelar() {
+        tarefasNovas.clear();
+        tarefasEditadas.clear();
+        tarefasExcluidas.clear();
+        carregarProjeto();
+        carregarTarefas();
+    }
 
     private DadosTarefa dadosParaStaging(UUID uuid, int row) {
         if (tarefasNovas.containsKey(uuid))    return tarefasNovas.get(uuid);
