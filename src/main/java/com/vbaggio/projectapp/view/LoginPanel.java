@@ -49,17 +49,31 @@ public class LoginPanel extends JPanel {
 
         btnEntrar.addActionListener(e -> tentarLogin());
         campSenha.addActionListener(e -> tentarLogin());
+        campLogin.addActionListener(e -> campSenha.requestFocus());
     }
 
     private void tentarLogin() {
         String login = campLogin.getText().trim();
         String senha = new String(campSenha.getPassword());
-        try {
-            Usuario usuario = usuarioCtrl.autenticar(login, senha);
-            frame.mostrarHome(usuario);
-        } catch (Exception ex) {
-            lblErro.setText(ex.getMessage());
-            campSenha.setText("");
-        }
+        btnEntrar.setEnabled(false);
+        lblErro.setText(" ");
+
+        new SwingWorker<Usuario, Void>() {
+            @Override
+            protected Usuario doInBackground() {
+                return usuarioCtrl.autenticar(login, senha);
+            }
+            @Override
+            protected void done() {
+                btnEntrar.setEnabled(true);
+                try {
+                    frame.mostrarHome(get());
+                } catch (Exception ex) {
+                    lblErro.setText(ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage());
+                    campSenha.setText("");
+                    campSenha.requestFocus();
+                }
+            }
+        }.execute();
     }
 }
