@@ -144,7 +144,7 @@ public class ProjetoPanel extends JPanel {
     private void abrirGestao() {
         int linha = tabela.getSelectedRow();
         if (linha < 0) return;
-        UUID id   = UUID.fromString(modelo.getValueAt(linha, 0).toString());
+        UUID id     = UUID.fromString(modelo.getValueAt(linha, 0).toString());
         String nome = modelo.getValueAt(linha, 1).toString();
 
         JFrame janela = janelasGestao.get(id);
@@ -152,19 +152,33 @@ public class ProjetoPanel extends JPanel {
             janela.toFront(); janela.requestFocus(); return;
         }
 
+        GestaoProjetoPanel gestaoPanel = new GestaoProjetoPanel(id, this::carregar);
         janela = new JFrame("Gerenciar Projeto — " + nome);
-        janela.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        janela.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         janela.setSize(820, 580);
         janela.setMinimumSize(new Dimension(600, 420));
         janela.setLocationRelativeTo(this);
-        janela.add(new GestaoProjetoPanel(id, this::carregar));
-        final UUID fId = id;
+        janela.add(gestaoPanel);
+
+        final UUID   fId         = id;
+        final JFrame janelaFinal = janela;
         janela.addWindowListener(new WindowAdapter() {
+            @Override public void windowClosing(WindowEvent e) {
+                if (gestaoPanel.temAlteracoesPendentes()) {
+                    int op = JOptionPane.showConfirmDialog(janelaFinal,
+                            "Há alterações não salvas. Deseja sair sem salvar?",
+                            "Alterações não salvas",
+                            JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                    if (op != JOptionPane.YES_OPTION) return;
+                }
+                janelaFinal.dispose();
+            }
             @Override public void windowClosed(WindowEvent e) {
                 janelasGestao.remove(fId);
                 carregar();
             }
         });
+
         janelasGestao.put(id, janela);
         janela.setVisible(true);
     }
