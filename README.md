@@ -51,6 +51,7 @@ O desenvolvimento arquitetural e o processo avaliativo do sistema iteram em proc
 | **Sprint 4** | 12/04 – 18/04/2026 | Refinamento do Backend & Entidade Tarefa | ✅ Completo |
 | **Sprint 5** | 19/04 – 25/04/2026 | Interface Gráfica (Swing) + FlatLaf | ✅ Completo |
 | **Sprint 6** | 26/04 – 02/05/2026 | Relatórios de Desempenho | ✅ Completo |
+| **Sprint 7** | 03/05 – 07/05/2026 | Qualidade de UI & Redesign do Módulo de Projetos | ✅ Completo |
 
 ---
 
@@ -83,6 +84,11 @@ Construção da camada View completa com Java Swing e FlatLaf como Look & Feel m
 Implementação da camada de relatórios analíticos sem alterações no banco de dados. Criação do `RelatorioController` (stateless, somente leitura) com agregação de métricas de projetos e membros. DTOs imutáveis como **Java records** (`ResumoProjeto`, `CargaUsuario`, `ProjetoOpcao`) como contrato entre Controller e View. `RelatorioPanel` com três abas usando `SwingWorker` para não bloquear a EDT: Resumo Global (cards por status via JPQL `GROUP BY`), Desempenho por Projeto (métricas de tarefas e prazo) e Carga de Trabalho (distribuição por membro via single query + agrupamento em memória, eliminando N+1). Revisão arquitetural pós-entrega corrigiu 10 pontos de melhoria (bugs, performance, EDT safety, entity leakage e qualidade de código).
 - 👉 [Sprint Backlog](docs/sprints/sprint-06/backlog.md)
 - 👉 [Relatório de Desenvolvimento](docs/sprints/sprint-06/relatorio.md)
+
+#### Sprint 7 — Qualidade de UI & Redesign do Módulo de Projetos `03/05 – 07/05/2026` ✅
+Melhorias transversais de qualidade de interface (`SwingWorker` em todos os painéis, double-click para edição, botões contextuais, empty state em tabelas, ordenação por coluna, formatação de enums e datas) seguidas de um redesign estrutural do módulo de projetos e tarefas. Criação do `GestaoProjetoPanel` — tela unificada que combina o formulário do projeto com gestão das suas tarefas, incluindo edição inline de status via `TableCellEditor`. Remoção do `TarefaPanel` como módulo autônomo. Grade do `HomePanel` reorganizada para `3 + 2` e botão `Sair` relocado para o rodapé com o nome do usuário logado. Commits conflitantes removidos via rebase local antes da implementação.
+- 👉 [Sprint Backlog](docs/sprints/sprint-07/backlog.md)
+- 👉 [Relatório de Desenvolvimento](docs/sprints/sprint-07/relatorio.md)
 
 ## 🚀 Como Executar Localmente
 
