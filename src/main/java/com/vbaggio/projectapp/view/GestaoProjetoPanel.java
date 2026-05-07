@@ -405,6 +405,22 @@ public class GestaoProjetoPanel extends JPanel {
     private void salvarTudo() { /* Task 7 */ }
     private void cancelar()   { /* Task 8 */ }
 
+    private DadosTarefa dadosParaStaging(UUID uuid, int row) {
+        if (tarefasNovas.containsKey(uuid))    return tarefasNovas.get(uuid);
+        if (tarefasEditadas.containsKey(uuid)) return tarefasEditadas.get(uuid);
+        Object respIdObj = modeloTarefas.getValueAt(row, 5);
+        UUID   respId    = (respIdObj == null || respIdObj.toString().isEmpty())
+                           ? null : UUID.fromString(respIdObj.toString());
+        Object descObj   = modeloTarefas.getValueAt(row, 6);
+        String desc      = descObj != null ? descObj.toString() : null;
+        return new DadosTarefa(
+                modeloTarefas.getValueAt(row, 1).toString(),
+                desc,
+                DateUtils.parse(modeloTarefas.getValueAt(row, 3).toString()),
+                respId,
+                (StatusTarefa) modeloTarefas.getValueAt(row, 2));
+    }
+
     // ------------------------------------------------------------------
     // Task CRUD
     // ------------------------------------------------------------------
@@ -463,43 +479,71 @@ public class GestaoProjetoPanel extends JPanel {
     private void editarTarefa() {
         int linha = tabelaTarefas.getSelectedRow();
         if (linha < 0) return;
-        UUID id = UUID.fromString((String) modeloTarefas.getValueAt(linha, 0));
-        Tarefa t = tarefaCtrl.buscarPorId(id).orElseThrow();
+        UUID uuid = UUID.fromString((String) modeloTarefas.getValueAt(linha, 0));
 
-        JTextField campNome     = new JTextField(t.getNome(), 24);
-        JTextArea  campDesc     = new JTextArea(t.getDescricao() != null ? t.getDescricao() : "", 3, 24);
-        campDesc.setLineWrap(true); campDesc.setWrapStyleWord(true);
+        DadosTarefa base = dadosParaStaging(uuid, linha);
+
+        JTextField          campNomeTarefa = new JTextField(base.nome(), 24);
+        JTextArea           campDescTarefa = new JTextArea(
+                base.descricao() != null ? base.descricao() : "", 3, 24);
+        campDescTarefa.setLineWrap(true); campDescTarefa.setWrapStyleWord(true);
         JFormattedTextField campPrazo = DateUtils.campData();
-        if (t.getPrazo() != null) campPrazo.setText(DateUtils.format(t.getPrazo()));
+        if (base.prazo() != null) campPrazo.setText(DateUtils.format(base.prazo()));
+
         JComboBox<OpcaoItem> comboResp = montarComboResponsavel();
-        if (t.getResponsavel() != null) {
+        if (base.responsavelId() != null) {
             for (int i = 0; i < comboResp.getItemCount(); i++) {
                 if (comboResp.getItemAt(i).id() != null
-                        && comboResp.getItemAt(i).id().equals(t.getResponsavel().getId())) {
+                        && comboResp.getItemAt(i).id().equals(base.responsavelId())) {
                     comboResp.setSelectedIndex(i); break;
                 }
             }
         }
 
+        JComboBox<StatusTarefa> comboSt = new JComboBox<>();
+        comboSt.addItem(base.status());
+        for (StatusTarefa prox : base.status().proximosStatus()) comboSt.addItem(prox);
+        comboSt.setSelectedItem(base.status());
+
         JPanel form = montarForm(
-                "Nome:", campNome,
-                "Descrição:", new JScrollPane(campDesc),
+                "Nome:",              campNomeTarefa,
+                "Descrição:",         new JScrollPane(campDescTarefa),
                 "Prazo (dd/MM/yyyy):", campPrazo,
-                "Responsável:", comboResp);
+                "Responsável:",       comboResp,
+                "Status:",            comboSt);
 
         while (true) {
             int op = JOptionPane.showConfirmDialog(this, form, "Editar Tarefa",
                     JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
             if (op != JOptionPane.OK_OPTION) return;
-            try {
-                tarefaCtrl.atualizarTarefa(id, campNome.getText().trim(),
-                        campDesc.getText().trim(), DateUtils.parse(campPrazo.getText()));
-                tarefaCtrl.reatribuirResponsavel(id, ((OpcaoItem) comboResp.getSelectedItem()).id());
-                carregarTarefas();
-                return;
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            String nome = campNomeTarefa.getText().trim();
+            if (nome.isBlank()) {
+                JOptionPane.showMessageDialog(this, "Nome da tarefa é obrigatório.",
+                        "Erro", JOptionPane.ERROR_MESSAGE);
+                continue;
             }
+            OpcaoItem resp = (OpcaoItem) comboResp.getSelectedItem();
+            DadosTarefa dados = new DadosTarefa(
+                    nome,
+                    campDescTarefa.getText().trim(),
+                    DateUtils.parse(campPrazo.getText()),
+                    resp != null ? resp.id() : null,
+                    (StatusTarefa) comboSt.getSelectedItem());
+
+            if (tarefasNovas.containsKey(uuid)) {
+                tarefasNovas.put(uuid, dados);
+            } else {
+                tarefasEditadas.put(uuid, dados);
+            }
+
+            modeloTarefas.setValueAt(dados.nome(),   linha, 1);
+            modeloTarefas.setValueAt(dados.status(), linha, 2);
+            modeloTarefas.setValueAt(DateUtils.format(dados.prazo()), linha, 3);
+            modeloTarefas.setValueAt(resp != null && resp.id() != null ? resp.label() : "", linha, 4);
+            modeloTarefas.setValueAt(resp != null && resp.id() != null ? resp.id().toString() : "", linha, 5);
+            modeloTarefas.setValueAt(dados.descricao() != null ? dados.descricao() : "", linha, 6);
+            atualizarContagem();
+            return;
         }
     }
 
