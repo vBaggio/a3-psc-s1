@@ -198,15 +198,23 @@ public class GestaoProjetoPanel extends JPanel {
                     UUID id = UUID.fromString((String) modeloTarefas.getValueAt(row, 0));
                     StatusTarefa atual = (StatusTarefa) modeloTarefas.getValueAt(row, 2);
                     if (novo != atual) {
-                        try {
-                            tarefaCtrl.atualizarStatus(id, novo);
-                            SwingUtilities.invokeLater(() -> carregarTarefas());
-                        } catch (Exception ex) {
-                            JOptionPane.showMessageDialog(GestaoProjetoPanel.this,
-                                    ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
-                            cancelCellEditing();
-                            return false;
-                        }
+                        super.stopCellEditing();
+                        new SwingWorker<Void, Void>() {
+                            @Override protected Void doInBackground() throws Exception {
+                                tarefaCtrl.atualizarStatus(id, novo);
+                                return null;
+                            }
+                            @Override protected void done() {
+                                try {
+                                    get();
+                                } catch (Exception ex) {
+                                    JOptionPane.showMessageDialog(GestaoProjetoPanel.this,
+                                            ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+                                }
+                                carregarTarefas();
+                            }
+                        }.execute();
+                        return true;
                     }
                 }
                 return super.stopCellEditing();
@@ -219,11 +227,18 @@ public class GestaoProjetoPanel extends JPanel {
     // ------------------------------------------------------------------
 
     private void carregarProjeto() {
-        new SwingWorker<Projeto, Void>() {
-            @Override protected Projeto doInBackground() { return projetoCtrl.buscarPorId(projetoId); }
-            @Override protected void done() {
+        new SwingWorker<Object[], Void>() {
+            @Override protected Object[] doInBackground() {
+                Projeto p = projetoCtrl.buscarPorId(projetoId);
+                List<Usuario> gerentes = usuarioCtrl.listarPorPerfil(Perfil.GERENTE);
+                return new Object[]{p, gerentes};
+            }
+            @Override @SuppressWarnings("unchecked")
+            protected void done() {
                 try {
-                    Projeto p = get();
+                    Object[] resultado = get();
+                    Projeto p = (Projeto) resultado[0];
+                    List<Usuario> gerentes = (List<Usuario>) resultado[1];
                     campNome.setText(p.getNome());
                     campDesc.setText(p.getDescricao() != null ? p.getDescricao() : "");
                     if (p.getDataInicio()   != null) campInicio.setText(DateUtils.format(p.getDataInicio()));
@@ -234,7 +249,6 @@ public class GestaoProjetoPanel extends JPanel {
                     for (StatusProjeto prox : p.getStatus().proximosStatus()) comboStatus.addItem(prox);
                     comboStatus.setSelectedItem(p.getStatus());
 
-                    List<Usuario> gerentes = usuarioCtrl.listarPorPerfil(Perfil.GERENTE);
                     comboGerente.removeAllItems();
                     for (Usuario u : gerentes)
                         comboGerente.addItem(new OpcaoItem(u.getId(), u.getNome()));
@@ -254,55 +268,61 @@ public class GestaoProjetoPanel extends JPanel {
     }
 
     private void salvarProjeto() {
-        try {
-            StatusProjeto novoStatus = (StatusProjeto) comboStatus.getSelectedItem();
-            OpcaoItem gerenteItem    = (OpcaoItem) comboGerente.getSelectedItem();
-            if (gerenteItem == null) {
-                JOptionPane.showMessageDialog(this, "Selecione um gerente.", "Aviso", JOptionPane.WARNING_MESSAGE);
-                return;
+        StatusProjeto novoStatus = (StatusProjeto) comboStatus.getSelectedItem();
+        OpcaoItem gerenteItem    = (OpcaoItem) comboGerente.getSelectedItem();
+        if (gerenteItem == null) {
+            JOptionPane.showMessageDialog(this, "Selecione um gerente.", "Aviso", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        UUID gerenteId   = gerenteItem.id();
+        String nome      = campNome.getText().trim();
+        String desc      = campDesc.getText().trim();
+        LocalDate inicio  = DateUtils.parse(campInicio.getText());
+        LocalDate previsao = DateUtils.parse(campPrevisao.getText());
+
+        // For CONCLUIDO transition: show date dialog on EDT before spawning the worker
+        final LocalDate[] dataFimHolder = {null};
+        if (novoStatus == StatusProjeto.CONCLUIDO) {
+            JFormattedTextField campFim = DateUtils.campData();
+            campFim.setText(DateUtils.format(LocalDate.now()));
+            while (true) {
+                int op = JOptionPane.showConfirmDialog(this, campFim,
+                        "Data de Encerramento (dd/MM/yyyy)",
+                        JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+                if (op != JOptionPane.OK_OPTION) return;
+                LocalDate dataFim = DateUtils.parse(campFim.getText());
+                if (dataFim == null) {
+                    JOptionPane.showMessageDialog(this, "Informe a data de encerramento.",
+                            "Erro", JOptionPane.ERROR_MESSAGE);
+                    continue;
+                }
+                dataFimHolder[0] = dataFim;
+                break;
             }
-            UUID gerenteId = gerenteItem.id();
+        }
 
-            Projeto atual = projetoCtrl.buscarPorId(projetoId);
-
-            // If transitioning to CONCLUIDO, request completion date first
-            if (novoStatus == StatusProjeto.CONCLUIDO && atual.getStatus() != StatusProjeto.CONCLUIDO) {
-                JFormattedTextField campFim = DateUtils.campData();
-                campFim.setText(DateUtils.format(LocalDate.now()));
-                while (true) {
-                    int op = JOptionPane.showConfirmDialog(this, campFim,
-                            "Data de Encerramento (dd/MM/yyyy)",
-                            JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-                    if (op != JOptionPane.OK_OPTION) return;
-                    LocalDate dataFim = DateUtils.parse(campFim.getText());
-                    if (dataFim == null) {
-                        JOptionPane.showMessageDialog(this, "Informe a data de encerramento.",
-                                "Erro", JOptionPane.ERROR_MESSAGE);
-                        continue;
-                    }
-                    projetoCtrl.atualizarProjeto(projetoId, campNome.getText().trim(),
-                            campDesc.getText().trim(),
-                            DateUtils.parse(campInicio.getText()),
-                            DateUtils.parse(campPrevisao.getText()), gerenteId);
-                    projetoCtrl.encerrarProjeto(projetoId, dataFim);
+        new SwingWorker<Void, Void>() {
+            @Override protected Void doInBackground() throws Exception {
+                Projeto atual = projetoCtrl.buscarPorId(projetoId);
+                projetoCtrl.atualizarProjeto(projetoId, nome, desc, inicio, previsao, gerenteId);
+                if (novoStatus == StatusProjeto.CONCLUIDO && atual.getStatus() != StatusProjeto.CONCLUIDO) {
+                    projetoCtrl.encerrarProjeto(projetoId, dataFimHolder[0]);
+                } else if (novoStatus != atual.getStatus()) {
+                    projetoCtrl.atualizarStatus(projetoId, novoStatus);
+                }
+                return null;
+            }
+            @Override protected void done() {
+                try {
+                    get();
                     if (onSalvar != null) onSalvar.run();
                     carregarProjeto();
-                    return;
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(GestaoProjetoPanel.this,
+                            ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
                 }
             }
-
-            projetoCtrl.atualizarProjeto(projetoId, campNome.getText().trim(),
-                    campDesc.getText().trim(),
-                    DateUtils.parse(campInicio.getText()),
-                    DateUtils.parse(campPrevisao.getText()), gerenteId);
-            if (novoStatus != atual.getStatus()) {
-                projetoCtrl.atualizarStatus(projetoId, novoStatus);
-            }
-            if (onSalvar != null) onSalvar.run();
-            carregarProjeto();
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
-        }
+        }.execute();
     }
 
     // ------------------------------------------------------------------
