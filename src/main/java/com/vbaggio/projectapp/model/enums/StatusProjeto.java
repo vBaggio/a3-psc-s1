@@ -13,4 +13,14 @@ public enum StatusProjeto {
             case CONCLUIDO, CANCELADO -> new StatusProjeto[]{};
         };
     }
+
+    @Override
+    public String toString() {
+        return switch (this) {
+            case PLANEJADO    -> "Planejado";
+            case EM_ANDAMENTO -> "Em Andamento";
+            case CONCLUIDO    -> "Concluído";
+            case CANCELADO    -> "Cancelado";
+        };
+    }
 }

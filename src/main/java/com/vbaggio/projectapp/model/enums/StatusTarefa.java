@@ -13,4 +13,14 @@ public enum StatusTarefa {
             case CONCLUIDA, CANCELADA -> new StatusTarefa[]{};
         };
     }
+
+    @Override
+    public String toString() {
+        return switch (this) {
+            case PENDENTE     -> "Pendente";
+            case EM_ANDAMENTO -> "Em Andamento";
+            case CONCLUIDA    -> "Concluída";
+            case CANCELADA    -> "Cancelada";
+        };
+    }
 }
