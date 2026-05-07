@@ -73,6 +73,10 @@ public class UsuarioPanel extends JPanel {
             btnExcluir.setEnabled(sel);
         });
 
+        btnNovo.setToolTipText("Criar novo usuário");
+        btnEditar.setToolTipText("Editar usuário selecionado");
+        btnExcluir.setToolTipText("Excluir usuário selecionado");
+
         btnNovo.addActionListener(e -> abrirFormulario(null));
         btnEditar.addActionListener(e -> {
             int linha = tabela.getSelectedRow();

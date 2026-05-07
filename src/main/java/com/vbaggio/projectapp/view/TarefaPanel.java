@@ -86,6 +86,12 @@ public class TarefaPanel extends JPanel {
 
         bar.add(btnNova); bar.add(btnEditar); bar.add(btnStatus); bar.add(btnRespons); bar.add(btnExcluir);
 
+        btnNova.setToolTipText("Criar nova tarefa para o projeto selecionado");
+        btnEditar.setToolTipText("Editar tarefa selecionada");
+        btnStatus.setToolTipText("Alterar status da tarefa selecionada");
+        btnRespons.setToolTipText("Reatribuir responsável pela tarefa");
+        btnExcluir.setToolTipText("Excluir tarefa selecionada");
+
         btnNova.addActionListener(e -> abrirFormulario());
         btnEditar.addActionListener(e -> abrirEdicao());
         btnStatus.addActionListener(e -> alterarStatus());

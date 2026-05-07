@@ -63,6 +63,10 @@ public class CargoPanel extends JPanel {
             btnExcluir.setEnabled(sel);
         });
 
+        btnNovo.setToolTipText("Criar novo cargo");
+        btnEditar.setToolTipText("Editar cargo selecionado");
+        btnExcluir.setToolTipText("Excluir cargo selecionado");
+
         btnNovo.addActionListener(e -> abrirFormulario(null));
         btnEditar.addActionListener(e -> {
             int linha = tabela.getSelectedRow();

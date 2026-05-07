@@ -65,6 +65,12 @@ public class ProjetoPanel extends JPanel {
 
         bar.add(btnNovo); bar.add(btnEditar); bar.add(btnStatus); bar.add(btnEncerrar);
 
+        btnNovo.setToolTipText("Criar novo projeto");
+        btnEditar.setToolTipText("Editar projeto selecionado");
+        btnStatus.setToolTipText("Alterar status do projeto selecionado");
+        btnEncerrar.setToolTipText("Registrar data de encerramento e concluir projeto");
+        btnTarefas.setToolTipText("Ver tarefas do projeto selecionado");
+
         btnNovo.addActionListener(e -> abrirFormulario());
         btnEditar.addActionListener(e -> abrirEdicao());
         btnStatus.addActionListener(e -> alterarStatus());
