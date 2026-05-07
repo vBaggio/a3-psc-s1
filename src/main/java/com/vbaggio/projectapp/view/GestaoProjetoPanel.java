@@ -20,7 +20,11 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.time.LocalDate;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 public class GestaoProjetoPanel extends JPanel {
@@ -48,6 +52,15 @@ public class GestaoProjetoPanel extends JPanel {
     private final JTable tabelaTarefas = TableUtils.tabelaComMensagem(
             modeloTarefas, "Nenhuma tarefa. Clique em 'Nova Tarefa' para adicionar.");
     private final JLabel lblContagem = new JLabel("Tarefas");
+
+    // Staging — changes not yet persisted
+    private final Map<UUID, DadosTarefa> tarefasNovas     = new LinkedHashMap<>();
+    private final Map<UUID, DadosTarefa> tarefasEditadas  = new LinkedHashMap<>();
+    private final Set<UUID>              tarefasExcluidas  = new LinkedHashSet<>();
+
+    public boolean temAlteracoesPendentes() {
+        return !tarefasNovas.isEmpty() || !tarefasEditadas.isEmpty() || !tarefasExcluidas.isEmpty();
+    }
 
     public GestaoProjetoPanel(UUID projetoId, Runnable onSalvar) {
         this.projetoId = projetoId;
