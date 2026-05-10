@@ -89,8 +89,24 @@ Implementação da camada de relatórios analíticos sem alterações no banco d
 Melhorias transversais de qualidade de interface (`SwingWorker` em todos os painéis, double-click para edição, botões contextuais, empty state em tabelas, ordenação por coluna, formatação de enums e datas) seguidas de um redesign estrutural do módulo de projetos e tarefas. Criação do `GestaoProjetoPanel` — tela unificada que combina o formulário do projeto com gestão das suas tarefas, incluindo edição inline de status via `TableCellEditor`. Remoção do `TarefaPanel` como módulo autônomo. Grade do `HomePanel` reorganizada para `3 + 2` e botão `Sair` relocado para o rodapé com o nome do usuário logado. Commits conflitantes removidos via rebase local antes da implementação.
 
 Fase final: `GestaoProjetoPanel` refatorado para **save atômico**. Operações de tarefa (criar, editar, excluir, alterar status) passaram a operar sobre staging em memória — três coleções (`tarefasNovas`, `tarefasEditadas`, `tarefasExcluidas`) rastreiam o estado pendente. Um único `Salvar` no rodapé persiste o projeto e todas as mudanças de tarefa via `SwingWorker`. Introdução do record `DadosTarefa` como unidade de staging. Aviso de alterações não salvas ao fechar a janela de gestão. Bugfix de índice view/model (`convertRowIndexToModel`) ao acessar `DefaultTableModel` com `RowSorter` ativo.
+
+Melhorias de qualidade pós-fase: remoção das restrições de transição de status e de exclusão por status de tarefa — operações agora sem restrição de estado anterior. Combos de status em toda a tela de gestão listam todos os valores possíveis (`StatusTarefa.values()`). `stopCellEditing` chamado automaticamente no início de `salvarTudo()`. Janela de gestão fecha automaticamente após salvar com sucesso. Migration V4 adiciona seed de usuários padrão (gerente + colaborador) e equipe com os três perfis como membros.
 - 👉 [Sprint Backlog](docs/sprints/sprint-07/backlog.md)
 - 👉 [Relatório de Desenvolvimento](docs/sprints/sprint-07/relatorio.md)
+
+## 👤 Usuários e Equipe Padrão
+
+As migrations Flyway criam automaticamente três usuários (um por perfil) e uma equipe com todos como membros:
+
+| Login | Senha | Perfil |
+|-------|-------|--------|
+| `admin` | `123` | Administrador |
+| `gerente` | `123` | Gerente |
+| `usuario` | `123` | Colaborador |
+
+> **Equipe Padrão** — criada automaticamente pela migration V4 com os três usuários acima como membros.
+
+---
 
 ## 🚀 Como Executar Localmente
 
@@ -115,7 +131,7 @@ docker compose up -d
 mvn flyway:migrate
 ```
 
-### 3. Compilar e executar a aplicação
+### 4. Compilar e executar a aplicação
 ```bash
 mvn compile exec:java -Dexec.mainClass="com.vbaggio.projectapp.Application"
 ```
