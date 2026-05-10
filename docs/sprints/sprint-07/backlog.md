@@ -54,6 +54,21 @@ Após análise crítica da UX pós-Fase 2, identificou-se que o botão "Salvar P
 
 ---
 
+## Fase 4 — Correções de Qualidade e Seed de Dados
+
+Melhorias cirúrgicas identificadas após a entrega da Fase 3, removendo restrições de negócio desnecessárias e adicionando dados padrão para facilitar testes e demonstração.
+
+| ID | Descrição da Tarefa | Status |
+|----|----------------------|--------|
+| **TSK-24** | Combos de status em `GestaoProjetoPanel` (editor inline, `novaTarefa()`, `editarTarefa()`) passam a listar todos os valores de `StatusTarefa.values()`, removendo a dependência de `proximosStatus()` e a restrição de transição na UI. | ✅ Concluído |
+| **TSK-25** | Remoção de `proximosStatus()` do enum `StatusTarefa` e de `validarTransicaoStatus()` + sua chamada em `TarefaController.atualizarStatus()` — qualquer transição de status passa a ser permitida. | ✅ Concluído |
+| **TSK-26** | Remoção da restrição de exclusão por status em `TarefaController.removerTarefa()` e da guarda de status em `GestaoProjetoPanel.excluirTarefa()` — tarefas podem ser excluídas independentemente do status. | ✅ Concluído |
+| **TSK-27** | `salvarTudo()` chama `tabelaTarefas.getCellEditor().stopCellEditing()` como primeira instrução quando há edição ativa — garante que alteração inline de status via combo não seja perdida ao clicar em Salvar sem tirar o foco da célula. | ✅ Concluído |
+| **TSK-28** | `ProjetoPanel.abrirGestao()` reordenado para criar o `JFrame` antes do `GestaoProjetoPanel`, permitindo que o callback `onSalvar` referencie `janelaFinal` via closure e chame `dispose()` automaticamente após salvar com sucesso. | ✅ Concluído |
+| **TSK-29** | Migration `V4__Seed_usuarios_e_equipe.sql`: insere usuários `gerente` (perfil `GERENTE`) e `usuario` (perfil `COLABORADOR`) com senha `123`, cria equipe "Equipe Padrão" e adiciona `admin`, `gerente` e `usuario` como membros via UUIDs fixos. README atualizado com seção "Usuários e Equipe Padrão". | ✅ Concluído |
+
+---
+
 ## Ferramentas e Componentes Adotados na Sprint
 
 - **Interface Gráfica:** Java Swing (javax.swing)

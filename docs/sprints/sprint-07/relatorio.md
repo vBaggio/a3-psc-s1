@@ -8,11 +8,15 @@
 
 ## 1. Resumo Executivo das Avaliações
 
-A Sprint 7 foi dividida em duas fases com objetivos distintos. A **Fase 1** entregou um conjunto de melhorias transversais de qualidade de UI: carregamento assíncrono via `SwingWorker` em todos os painéis, double-click para edição, desabilitação contextual de botões, formatação legível de enums e datas, empty state em tabelas, ordenação por coluna e atalhos de teclado. A **Fase 2** surgiu de uma análise UX que identificou problemas estruturais no módulo de projetos e tarefas — redundância de botões, ausência de coesão entre `Projeto` e `Tarefa`, e `TarefaPanel` como módulo autônomo de baixo valor — e resultou no redesign completo do módulo.
+A Sprint 7 foi dividida em quatro fases com objetivos distintos. A **Fase 1** entregou um conjunto de melhorias transversais de qualidade de UI: carregamento assíncrono via `SwingWorker` em todos os painéis, double-click para edição, desabilitação contextual de botões, formatação legível de enums e datas, empty state em tabelas, ordenação por coluna e atalhos de teclado. A **Fase 2** surgiu de uma análise UX que identificou problemas estruturais no módulo de projetos e tarefas — redundância de botões, ausência de coesão entre `Projeto` e `Tarefa`, e `TarefaPanel` como módulo autônomo de baixo valor — e resultou no redesign completo do módulo.
 
 O ponto central do redesign foi a criação do `GestaoProjetoPanel`: uma janela que unifica o formulário de dados do projeto com a gestão das suas tarefas em um único contexto, eliminando quatro telas de diálogo separadas e dois botões redundantes. Paralelamente, `TarefaPanel` foi removido como módulo autônomo, a grade do `HomePanel` foi reorganizada para `3 + 2` e o botão `Sair` foi relocado do cabeçalho para o rodapé ao lado do nome do usuário logado.
 
 Commits que conflitavam com as novas decisões de design foram removidos do histórico via **rebase local** antes do início da implementação, mantendo o histórico coeso e sem revelar decisões de design descartadas nos relatórios finais.
+
+A **Fase 3** tornou `GestaoProjetoPanel` atômico: projeto e tarefas passaram a ser persistidos juntos em um único `Salvar`, com staging em memória via três coleções (`tarefasNovas`, `tarefasEditadas`, `tarefasExcluidas`) e aviso ao fechar janela com alterações pendentes.
+
+A **Fase 4** aplicou correções cirúrgicas de qualidade identificadas após a entrega: remoção das restrições de transição de status e de exclusão por status de tarefa, combos de status listando todos os valores, `stopCellEditing` automático antes de salvar, fechamento automático da janela de gestão após salvar. Adicionalmente, a migration `V4` criou dados padrão de seed — três usuários (um por perfil) e uma equipe com todos como membros — documentados no README.
 
 ---
 
@@ -39,6 +43,12 @@ Commits que conflitavam com as novas decisões de design foram removidos do hist
 | **07/05/2026** | **Implementação do save atômico — `salvarTudo()` e `cancelar()`:** `salvarProjeto()` removido. `salvarTudo()` copia os três staging maps para variáveis locais antes de disparar o `SwingWorker` (evitando race condition), persiste projeto, aplica novas tarefas (`criarTarefa` + `atualizarStatus` se não-PENDENTE), aplica edições (`atualizarTarefa` + `reatribuirResponsavel` + `atualizarStatus` se diferente do banco) e executa exclusões. Em `done()`: limpa staging, invoca callback e recarrega. `cancelar()` limpa as três coleções e recarrega do banco. |
 | **07/05/2026** | **`ProjetoPanel` — aviso de alterações não salvas:** `abrirGestao()` alterado para `JFrame.DO_NOTHING_ON_CLOSE`; `WindowAdapter.windowClosing()` consulta `gestaoPanel.temAlteracoesPendentes()` e, se verdadeiro, exibe diálogo YES/NO antes de chamar `dispose()`. `windowClosed()` permanece responsável por limpar o mapa de janelas abertas e atualizar a listagem. |
 | **07/05/2026** | **Bugfix — view row vs. model row com RowSorter:** `setAutoCreateRowSorter(true)` faz `getSelectedRow()` e `getEditingRow()` retornarem índices de view, que divergem dos índices de model quando a tabela está ordenada. Todos os três pontos de acesso ao `DefaultTableModel` com índice dinâmico foram corrigidos com `convertRowIndexToModel()`: `editarTarefa()`, `excluirTarefa()` e `stopCellEditing()`. Sem essa correção, ordenar a tabela e editar/excluir operaria sobre a linha errada silenciosamente. |
+
+| **09/05/2026** | **[DECISÃO DE DESIGN] Remoção de restrições de transição de status:** A máquina de estados de `StatusTarefa` (`proximosStatus()`) foi identificada como restrição desnecessária para o contexto do sistema — o gerente deve poder atualizar o status para qualquer valor sem restrição de fluxo. `proximosStatus()` foi removido do enum, `validarTransicaoStatus()` e sua chamada foram removidos de `TarefaController.atualizarStatus()`. Os três pontos de `GestaoProjetoPanel` que populavam combos via `proximosStatus()` foram substituídos por `StatusTarefa.values()`. |
+| **09/05/2026** | **Remoção da restrição de exclusão por status:** `TarefaController.removerTarefa()` verificava se o status era `EM_ANDAMENTO` ou `CONCLUIDA` antes de deletar, lançando `IllegalStateException`. A guarda equivalente existia na view (`GestaoProjetoPanel.excluirTarefa()`). Ambas foram removidas — tarefas podem ser excluídas independentemente do status. |
+| **09/05/2026** | **`stopCellEditing` automático em `salvarTudo()`:** Identificado cenário onde o usuário alterava o status via combo inline e clicava em Salvar sem tirar o foco da célula — a edição permanecia "suspensa" no editor e não era capturada pelo staging. Corrigido com `if (tabelaTarefas.isEditing()) tabelaTarefas.getCellEditor().stopCellEditing()` como primeira instrução de `salvarTudo()`. |
+| **09/05/2026** | **Fechamento automático da janela após salvar:** `ProjetoPanel.abrirGestao()` reordenado para criar o `JFrame` (`janelaFinal`) antes do `GestaoProjetoPanel`, permitindo que o lambda do callback `onSalvar` capture `janelaFinal` e chame `dispose()` após `this.carregar()`. Anteriormente o callback era `this::carregar` e a janela permanecia aberta após salvar. |
+| **09/05/2026** | **Migration V4 — seed de usuários e equipe padrão:** `V4__Seed_usuarios_e_equipe.sql` inseriu usuários `gerente` (perfil `GERENTE`) e `usuario` (perfil `COLABORADOR`) com UUIDs fixos e senha BCrypt de `123`. Criada equipe "Equipe Padrão" com UUID fixo; membros inseridos via UUID fixo (gerente, usuario) e subconsulta por login (admin, sem UUID fixo no V3). README recebeu seção "Usuários e Equipe Padrão" com tabela de credenciais antes de "Como Executar Localmente". |
 
 ---
 
@@ -72,6 +82,11 @@ A conversão `view → model row` com `RowSorter` ativo é um bug silencioso tí
 | Método `removerProjeto()` e cascade | `src/main/java/.../controller/ProjetoController.java` | Modificado |
 | `@OneToMany` com cascade e orphanRemoval | `src/main/java/.../model/entity/Projeto.java` | Modificado |
 | Painel autônomo de tarefas (removido) | `src/main/java/.../view/TarefaPanel.java` | Removido |
+| Enum de status sem restrição de transição | `src/main/java/.../model/enums/StatusTarefa.java` | Modificado |
+| Controller de tarefas sem validação de transição/exclusão | `src/main/java/.../controller/TarefaController.java` | Modificado |
+| Tela de gestão com combos completos e stopCellEditing | `src/main/java/.../view/GestaoProjetoPanel.java` | Modificado |
+| Painel de projetos com fechamento automático pós-save | `src/main/java/.../view/ProjetoPanel.java` | Modificado |
+| Seed de usuários e equipe padrão | `src/main/resources/db/migration/V4__Seed_usuarios_e_equipe.sql` | Criado |
 
 ---
 
