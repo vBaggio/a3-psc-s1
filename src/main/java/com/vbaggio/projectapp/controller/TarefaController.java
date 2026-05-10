@@ -134,7 +134,6 @@ public class TarefaController {
      */
     public Tarefa atualizarStatus(UUID tarefaId, StatusTarefa novoStatus) {
         Tarefa tarefa = buscarTarefaOuFalhar(tarefaId);
-        validarTransicaoStatus(tarefa.getStatus(), novoStatus);
         tarefa.setStatus(novoStatus);
         return tarefaRepo.atualizar(tarefa);
     }
@@ -235,17 +234,4 @@ public class TarefaController {
                 .orElseThrow(() -> new IllegalArgumentException("Tarefa não encontrada."));
     }
 
-    private void validarTransicaoStatus(StatusTarefa atual, StatusTarefa novo) {
-        boolean valido = switch (atual) {
-            case PENDENTE     -> novo == StatusTarefa.EM_ANDAMENTO || novo == StatusTarefa.CANCELADA;
-            case EM_ANDAMENTO -> novo == StatusTarefa.CONCLUIDA    || novo == StatusTarefa.CANCELADA;
-            case CONCLUIDA    -> throw new IllegalStateException("Tarefa já concluída.");
-            case CANCELADA    -> throw new IllegalStateException("Tarefa já cancelada.");
-        };
-        if (!valido) {
-            throw new IllegalStateException(
-                    "Transição de status inválida: " + atual + " → " + novo
-            );
-        }
-    }
 }

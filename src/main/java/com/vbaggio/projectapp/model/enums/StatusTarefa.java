@@ -6,14 +6,6 @@ public enum StatusTarefa {
     CONCLUIDA,
     CANCELADA;
 
-    public StatusTarefa[] proximosStatus() {
-        return switch (this) {
-            case PENDENTE     -> new StatusTarefa[]{EM_ANDAMENTO, CANCELADA};
-            case EM_ANDAMENTO -> new StatusTarefa[]{CONCLUIDA, CANCELADA};
-            case CONCLUIDA, CANCELADA -> new StatusTarefa[]{};
-        };
-    }
-
     @Override
     public String toString() {
         return switch (this) {
