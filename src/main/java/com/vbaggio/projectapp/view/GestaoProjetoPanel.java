@@ -339,6 +339,7 @@ public class GestaoProjetoPanel extends JPanel {
     }
 
     private void salvarTudo() {
+        if (tabelaTarefas.isEditing()) tabelaTarefas.getCellEditor().stopCellEditing();
         StatusProjeto novoStatus = (StatusProjeto) comboStatus.getSelectedItem();
         OpcaoItem     gerenteItem = (OpcaoItem) comboGerente.getSelectedItem();
         if (gerenteItem == null) {
