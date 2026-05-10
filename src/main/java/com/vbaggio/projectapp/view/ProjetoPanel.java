@@ -152,17 +152,20 @@ public class ProjetoPanel extends JPanel {
             janela.toFront(); janela.requestFocus(); return;
         }
 
-        GestaoProjetoPanel gestaoPanel = new GestaoProjetoPanel(id, this::carregar);
-        janela = new JFrame("Gerenciar Projeto — " + nome);
-        janela.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        janela.setSize(820, 580);
-        janela.setMinimumSize(new Dimension(600, 420));
-        janela.setLocationRelativeTo(this);
-        janela.add(gestaoPanel);
+        final JFrame janelaFinal = new JFrame("Gerenciar Projeto — " + nome);
+        GestaoProjetoPanel gestaoPanel = new GestaoProjetoPanel(id, () -> {
+            this.carregar();
+            janelaFinal.dispose();
+        });
 
-        final UUID   fId         = id;
-        final JFrame janelaFinal = janela;
-        janela.addWindowListener(new WindowAdapter() {
+        janelaFinal.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        janelaFinal.setSize(820, 580);
+        janelaFinal.setMinimumSize(new Dimension(600, 420));
+        janelaFinal.setLocationRelativeTo(this);
+        janelaFinal.add(gestaoPanel);
+
+        final UUID fId = id;
+        janelaFinal.addWindowListener(new WindowAdapter() {
             @Override public void windowClosing(WindowEvent e) {
                 if (gestaoPanel.temAlteracoesPendentes()) {
                     int op = JOptionPane.showConfirmDialog(janelaFinal,
@@ -179,8 +182,8 @@ public class ProjetoPanel extends JPanel {
             }
         });
 
-        janelasGestao.put(id, janela);
-        janela.setVisible(true);
+        janelasGestao.put(id, janelaFinal);
+        janelaFinal.setVisible(true);
     }
 
     private void excluir() {
