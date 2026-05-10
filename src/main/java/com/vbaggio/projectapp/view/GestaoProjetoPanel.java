@@ -593,13 +593,6 @@ public class GestaoProjetoPanel extends JPanel {
         if (tarefasNovas.containsKey(uuid)) {
             tarefasNovas.remove(uuid);
         } else {
-            StatusTarefa status = (StatusTarefa) modeloTarefas.getValueAt(linha, 2);
-            if (status == StatusTarefa.EM_ANDAMENTO || status == StatusTarefa.CONCLUIDA) {
-                JOptionPane.showMessageDialog(this,
-                        "Apenas tarefas PENDENTE ou CANCELADA podem ser removidas.",
-                        "Erro", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
             tarefasEditadas.remove(uuid);
             tarefasExcluidas.add(uuid);
         }

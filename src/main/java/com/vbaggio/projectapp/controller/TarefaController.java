@@ -213,15 +213,7 @@ public class TarefaController {
      * @throws IllegalStateException    se o status não permitir remoção
      */
     public void removerTarefa(UUID tarefaId) {
-        Tarefa tarefa = buscarTarefaOuFalhar(tarefaId);
-
-        if (tarefa.getStatus() == StatusTarefa.EM_ANDAMENTO
-                || tarefa.getStatus() == StatusTarefa.CONCLUIDA) {
-            throw new IllegalStateException(
-                    "Apenas tarefas PENDENTE ou CANCELADA podem ser removidas."
-            );
-        }
-
+        buscarTarefaOuFalhar(tarefaId);
         tarefaRepo.deletar(tarefaId);
     }
 
