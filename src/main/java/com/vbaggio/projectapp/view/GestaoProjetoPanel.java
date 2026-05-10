@@ -210,11 +210,8 @@ public class GestaoProjetoPanel extends JPanel {
             @Override
             public Component getTableCellEditorComponent(JTable table, Object value,
                     boolean isSelected, int row, int col) {
-                StatusTarefa atual = (StatusTarefa) value;
-                JComboBox<StatusTarefa> combo = new JComboBox<>();
-                combo.addItem(atual);
-                for (StatusTarefa prox : atual.proximosStatus()) combo.addItem(prox);
-                combo.setSelectedItem(atual);
+                JComboBox<StatusTarefa> combo = new JComboBox<>(StatusTarefa.values());
+                combo.setSelectedItem(value);
                 editorComponent = combo;
                 return combo;
             }
@@ -468,9 +465,7 @@ public class GestaoProjetoPanel extends JPanel {
         campDescTarefa.setLineWrap(true); campDescTarefa.setWrapStyleWord(true);
         JFormattedTextField campPrazo      = DateUtils.campData();
         JComboBox<OpcaoItem>    comboResp  = montarComboResponsavel();
-        JComboBox<StatusTarefa> comboSt    = new JComboBox<>();
-        comboSt.addItem(StatusTarefa.PENDENTE);
-        for (StatusTarefa prox : StatusTarefa.PENDENTE.proximosStatus()) comboSt.addItem(prox);
+        JComboBox<StatusTarefa> comboSt = new JComboBox<>(StatusTarefa.values());
         comboSt.setSelectedItem(StatusTarefa.PENDENTE);
 
         JPanel form = montarForm(
@@ -538,9 +533,7 @@ public class GestaoProjetoPanel extends JPanel {
             }
         }
 
-        JComboBox<StatusTarefa> comboSt = new JComboBox<>();
-        comboSt.addItem(base.status());
-        for (StatusTarefa prox : base.status().proximosStatus()) comboSt.addItem(prox);
+        JComboBox<StatusTarefa> comboSt = new JComboBox<>(StatusTarefa.values());
         comboSt.setSelectedItem(base.status());
 
         JPanel form = montarForm(
