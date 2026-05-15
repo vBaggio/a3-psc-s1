@@ -101,64 +101,83 @@ public class ProjetoPanel extends JPanel {
     }
 
     private void abrirFormulario() {
-        List<Usuario> gerentes = usuarioCtrl.listarPorPerfil(Perfil.GERENTE);
-        if (gerentes.isEmpty()) {
-            JOptionPane.showMessageDialog(this,
-                    "Não há usuários com perfil GERENTE cadastrados.", "Aviso", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        JTextField campNome = new JTextField(24);
-        JTextArea campDesc  = new JTextArea(3, 24);
-        campDesc.setLineWrap(true); campDesc.setWrapStyleWord(true);
-        JFormattedTextField campInicio   = DateUtils.campData();
-        campInicio.setText(DateUtils.format(LocalDate.now()));
-        JFormattedTextField campPrevisao = DateUtils.campData();
-        OpcaoItem[] opcoesGerente = gerentes.stream()
-                .map(u -> new OpcaoItem(u.getId(), u.getNome()))
-                .toArray(OpcaoItem[]::new);
-        JComboBox<OpcaoItem> comboGerente = new JComboBox<>(opcoesGerente);
-
-        List<Equipe> equipes = equipeCtrl.listarEquipes().stream()
-                .filter(e -> !equipeCtrl.listarMembros(e.getId()).isEmpty())
-                .toList();
-        if (equipes.isEmpty()) {
-            JOptionPane.showMessageDialog(this,
-                    "Não há equipes com membros cadastrados. Cadastre uma equipe com ao menos 1 membro antes de criar um projeto.",
-                    "Aviso", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        OpcaoItem[] opcoesEquipe = equipes.stream()
-                .map(e -> new OpcaoItem(e.getId(), e.getNome()))
-                .toArray(OpcaoItem[]::new);
-        JComboBox<OpcaoItem> comboEquipe = new JComboBox<>(opcoesEquipe);
-
-        JPanel form = montarForm(
-                "Nome:", campNome,
-                "Descrição:", new JScrollPane(campDesc),
-                "Início (dd/MM/yyyy):", campInicio,
-                "Previsão (dd/MM/yyyy):", campPrevisao,
-                "Gerente:", comboGerente,
-                "Equipe:", comboEquipe);
-
-        while (true) {
-            int op = JOptionPane.showConfirmDialog(this, form, "Novo Projeto",
-                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-            if (op != JOptionPane.OK_OPTION) return;
-            try {
-                UUID gerenteId = ((OpcaoItem) comboGerente.getSelectedItem()).id();
-                UUID equipeId  = ((OpcaoItem) comboEquipe.getSelectedItem()).id();
-                ctrl.criarProjeto(campNome.getText().trim(), campDesc.getText().trim(),
-                        DateUtils.parse(campInicio.getText()),
-                        DateUtils.parse(campPrevisao.getText()),
-                        gerenteId, equipeId);
-                scrollParaFim = true;
-                carregar();
-                return;
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+        new SwingWorker<Object[], Void>() {
+            @Override
+            protected Object[] doInBackground() {
+                List<Usuario> gerentes = usuarioCtrl.listarPorPerfil(Perfil.GERENTE);
+                List<Equipe> equipes = equipeCtrl.listarEquipes().stream()
+                        .filter(e -> !equipeCtrl.listarMembros(e.getId()).isEmpty())
+                        .toList();
+                return new Object[]{gerentes, equipes};
             }
-        }
+
+            @Override
+            @SuppressWarnings("unchecked")
+            protected void done() {
+                try {
+                    Object[] resultado = get();
+                    List<Usuario> gerentes = (List<Usuario>) resultado[0];
+                    List<Equipe>  equipes  = (List<Equipe>)  resultado[1];
+
+                    if (gerentes.isEmpty()) {
+                        JOptionPane.showMessageDialog(ProjetoPanel.this,
+                                "Não há usuários com perfil GERENTE cadastrados.", "Aviso", JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
+                    if (equipes.isEmpty()) {
+                        JOptionPane.showMessageDialog(ProjetoPanel.this,
+                                "Não há equipes com membros cadastrados. Cadastre uma equipe com ao menos 1 membro antes de criar um projeto.",
+                                "Aviso", JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
+
+                    JTextField campNome = new JTextField(24);
+                    JTextArea campDesc  = new JTextArea(3, 24);
+                    campDesc.setLineWrap(true); campDesc.setWrapStyleWord(true);
+                    JFormattedTextField campInicio   = DateUtils.campData();
+                    campInicio.setText(DateUtils.format(LocalDate.now()));
+                    JFormattedTextField campPrevisao = DateUtils.campData();
+                    OpcaoItem[] opcoesGerente = gerentes.stream()
+                            .map(u -> new OpcaoItem(u.getId(), u.getNome()))
+                            .toArray(OpcaoItem[]::new);
+                    JComboBox<OpcaoItem> comboGerente = new JComboBox<>(opcoesGerente);
+                    OpcaoItem[] opcoesEquipe = equipes.stream()
+                            .map(e -> new OpcaoItem(e.getId(), e.getNome()))
+                            .toArray(OpcaoItem[]::new);
+                    JComboBox<OpcaoItem> comboEquipe = new JComboBox<>(opcoesEquipe);
+
+                    JPanel form = montarForm(
+                            "Nome:", campNome,
+                            "Descrição:", new JScrollPane(campDesc),
+                            "Início (dd/MM/yyyy):", campInicio,
+                            "Previsão (dd/MM/yyyy):", campPrevisao,
+                            "Gerente:", comboGerente,
+                            "Equipe:", comboEquipe);
+
+                    while (true) {
+                        int op = JOptionPane.showConfirmDialog(ProjetoPanel.this, form, "Novo Projeto",
+                                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+                        if (op != JOptionPane.OK_OPTION) return;
+                        try {
+                            UUID gerenteId = ((OpcaoItem) comboGerente.getSelectedItem()).id();
+                            UUID equipeId  = ((OpcaoItem) comboEquipe.getSelectedItem()).id();
+                            ctrl.criarProjeto(campNome.getText().trim(), campDesc.getText().trim(),
+                                    DateUtils.parse(campInicio.getText()),
+                                    DateUtils.parse(campPrevisao.getText()),
+                                    gerenteId, equipeId);
+                            scrollParaFim = true;
+                            carregar();
+                            return;
+                        } catch (Exception ex) {
+                            JOptionPane.showMessageDialog(ProjetoPanel.this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(ProjetoPanel.this,
+                            ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }.execute();
     }
 
     private void abrirGestao() {
