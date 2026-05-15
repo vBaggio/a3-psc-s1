@@ -45,7 +45,7 @@ public class ProjetoRepository {
         EntityManager em = JpaUtil.getEntityManager();
         try {
             List<Projeto> result = em.createQuery(
-                    "SELECT p FROM Projeto p LEFT JOIN FETCH p.gerente WHERE p.id = :id",
+                    "SELECT p FROM Projeto p LEFT JOIN FETCH p.gerente LEFT JOIN FETCH p.equipe WHERE p.id = :id",
                     Projeto.class)
                     .setParameter("id", id)
                     .getResultList();
@@ -64,7 +64,7 @@ public class ProjetoRepository {
         EntityManager em = JpaUtil.getEntityManager();
         try {
             return em.createQuery(
-                            "SELECT p FROM Projeto p LEFT JOIN FETCH p.gerente ORDER BY p.nome",
+                            "SELECT p FROM Projeto p LEFT JOIN FETCH p.gerente LEFT JOIN FETCH p.equipe ORDER BY p.nome",
                             Projeto.class)
                     .getResultList();
         } finally {
@@ -82,7 +82,7 @@ public class ProjetoRepository {
         EntityManager em = JpaUtil.getEntityManager();
         try {
             return em.createQuery(
-                            "SELECT p FROM Projeto p LEFT JOIN FETCH p.gerente WHERE p.status = :status ORDER BY p.nome",
+                            "SELECT p FROM Projeto p LEFT JOIN FETCH p.gerente LEFT JOIN FETCH p.equipe WHERE p.status = :status ORDER BY p.nome",
                             Projeto.class)
                     .setParameter("status", status)
                     .getResultList();
