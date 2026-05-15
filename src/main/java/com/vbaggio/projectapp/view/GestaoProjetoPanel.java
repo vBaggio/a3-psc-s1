@@ -384,7 +384,7 @@ public class GestaoProjetoPanel extends JPanel {
                 // Acceptable limitation for this scope — staging is preserved on error.
                 // 1. Projeto
                 Projeto atual = projetoCtrl.buscarPorId(projetoId);
-                projetoCtrl.atualizarProjeto(projetoId, nome, desc, inicio, previsao, gerenteId);
+                projetoCtrl.atualizarProjeto(projetoId, nome, desc, inicio, previsao, gerenteId, null);
                 if (novoStatus == StatusProjeto.CONCLUIDO
                         && atual.getStatus() != StatusProjeto.CONCLUIDO) {
                     projetoCtrl.encerrarProjeto(projetoId, dataFimHolder[0]);

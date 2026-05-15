@@ -1,5 +1,6 @@
 package com.vbaggio.projectapp.controller;
 
+import com.vbaggio.projectapp.model.entity.Equipe;
 import com.vbaggio.projectapp.model.entity.Projeto;
 import com.vbaggio.projectapp.model.entity.Usuario;
 import com.vbaggio.projectapp.model.enums.Perfil;
@@ -53,7 +54,7 @@ public class ProjetoController {
      */
     public Projeto criarProjeto(String nome, String descricao,
                                 LocalDate dataInicio, LocalDate dataPrevisao,
-                                UUID gerenteId) {
+                                UUID gerenteId, UUID equipeId) {
         if (nome == null || nome.isBlank()) {
             throw new IllegalArgumentException("O nome do projeto é obrigatório.");
         }
@@ -68,6 +69,11 @@ public class ProjetoController {
         projeto.setDataPrevisao(dataPrevisao);
         projeto.setStatus(StatusProjeto.PLANEJADO);
         projeto.setGerente(gerente);
+
+        if (equipeId != null) {
+            Equipe equipe = resolverEquipe(equipeId);
+            projeto.setEquipe(equipe);
+        }
 
         projetoRepo.salvar(projeto);
         return projeto;
@@ -92,7 +98,7 @@ public class ProjetoController {
      */
     public void atualizarProjeto(UUID id, String nome, String descricao,
                                   LocalDate dataInicio, LocalDate dataPrevisao,
-                                  UUID gerenteId) {
+                                  UUID gerenteId, UUID equipeId) {
         if (nome == null || nome.isBlank()) {
             throw new IllegalArgumentException("O nome do projeto é obrigatório.");
         }
@@ -108,6 +114,12 @@ public class ProjetoController {
         projeto.setDataInicio(dataInicio);
         projeto.setDataPrevisao(dataPrevisao);
         projeto.setGerente(resolverGerente(gerenteId));
+
+        if (equipeId != null) {
+            Equipe equipe = resolverEquipe(equipeId);
+            projeto.setEquipe(equipe);
+        }
+
         projetoRepo.atualizar(projeto);
     }
 
@@ -164,28 +176,6 @@ public class ProjetoController {
         Projeto concluido = projetoRepo.atualizar(projeto);
 
         return concluido;
-    }
-
-    /**
-     * Aloca uma equipe em um projeto.
-     *
-     * <p>Regra: a equipe deve ter ao menos 1 membro cadastrado.</p>
-     *
-     * @param projetoId UUID do projeto
-     * @param equipeId  UUID da equipe
-     */
-    public void atribuirEquipe(UUID projetoId, UUID equipeId) {
-        buscarPorId(projetoId); // valida existência
-
-        equipeRepo.buscarPorId(equipeId)
-                .orElseThrow(() -> new IllegalArgumentException("Equipe não encontrada: " + equipeId));
-
-        List<Usuario> membros = equipeRepo.listarMembrosDaEquipe(equipeId);
-        if (membros.isEmpty()) {
-            throw new IllegalStateException("A equipe deve ter ao menos 1 membro antes de ser alocada.");
-        }
-
-        equipeRepo.adicionarProjeto(equipeId, projetoId);
     }
 
     /**
@@ -255,6 +245,16 @@ public class ProjetoController {
                     "Transição de status inválida: " + atual + " → " + novo
             );
         }
+    }
+
+    private Equipe resolverEquipe(UUID equipeId) {
+        Equipe equipe = equipeRepo.buscarPorId(equipeId)
+                .orElseThrow(() -> new IllegalArgumentException("Equipe não encontrada"));
+        List<Usuario> membros = equipeRepo.listarMembrosDaEquipe(equipeId);
+        if (membros.isEmpty()) {
+            throw new IllegalArgumentException("Equipe deve ter pelo menos um membro");
+        }
+        return equipe;
     }
 
     private Usuario resolverGerente(UUID gerenteId) {

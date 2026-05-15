@@ -2,7 +2,6 @@ package com.vbaggio.projectapp.repository;
 
 import com.vbaggio.projectapp.repository.JpaUtil;
 import com.vbaggio.projectapp.model.entity.Equipe;
-import com.vbaggio.projectapp.model.entity.Projeto;
 import com.vbaggio.projectapp.model.entity.Usuario;
 import jakarta.persistence.EntityManager;
 
@@ -130,32 +129,6 @@ public class EquipeRepository {
             if (equipe != null) {
                 equipe.getMembros().removeIf(u -> u.getId().equals(usuarioId));
                 em.merge(equipe);
-            }
-            em.getTransaction().commit();
-        } catch (Exception e) {
-            em.getTransaction().rollback();
-            throw e;
-        } finally {
-            em.close();
-        }
-    }
-
-    /**
-     * Vincula uma {@link Equipe} a um {@link Projeto}.
-     * Persiste o relacionamento na tabela {@code equipe_projeto}.
-     *
-     * @param equipeId  UUID da equipe
-     * @param projetoId UUID do projeto
-     */
-    public void adicionarProjeto(UUID equipeId, UUID projetoId) {
-        EntityManager em = JpaUtil.getEntityManager();
-        try {
-            em.getTransaction().begin();
-            Equipe equipe   = em.find(Equipe.class, equipeId);
-            Projeto projeto = em.find(Projeto.class, projetoId);
-            if (equipe != null && projeto != null && !equipe.getProjetos().contains(projeto)) {
-                projeto.setEquipe(equipe);
-                em.merge(projeto);
             }
             em.getTransaction().commit();
         } catch (Exception e) {

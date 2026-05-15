@@ -131,7 +131,7 @@ public class ProjetoPanel extends JPanel {
                 ctrl.criarProjeto(campNome.getText().trim(), campDesc.getText().trim(),
                         DateUtils.parse(campInicio.getText()),
                         DateUtils.parse(campPrevisao.getText()),
-                        gerenteId);
+                        gerenteId, null);
                 scrollParaFim = true;
                 carregar();
                 return;
