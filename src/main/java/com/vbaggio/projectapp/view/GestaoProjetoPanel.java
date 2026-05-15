@@ -1,8 +1,10 @@
 package com.vbaggio.projectapp.view;
 
+import com.vbaggio.projectapp.controller.EquipeController;
 import com.vbaggio.projectapp.controller.ProjetoController;
 import com.vbaggio.projectapp.controller.TarefaController;
 import com.vbaggio.projectapp.controller.UsuarioController;
+import com.vbaggio.projectapp.model.entity.Equipe;
 import com.vbaggio.projectapp.model.entity.Projeto;
 import com.vbaggio.projectapp.model.entity.Tarefa;
 import com.vbaggio.projectapp.model.entity.Usuario;
@@ -32,6 +34,7 @@ public class GestaoProjetoPanel extends JPanel {
     private final ProjetoController projetoCtrl = new ProjetoController();
     private final TarefaController  tarefaCtrl  = new TarefaController();
     private final UsuarioController usuarioCtrl = new UsuarioController();
+    private final EquipeController  equipeCtrl  = new EquipeController();
 
     private final UUID projetoId;
     private final Runnable onSalvar;
@@ -41,6 +44,7 @@ public class GestaoProjetoPanel extends JPanel {
     private final JTextArea                campDesc     = new JTextArea(3, 28);
     private final JComboBox<StatusProjeto> comboStatus  = new JComboBox<>();
     private final JComboBox<OpcaoItem>     comboGerente = new JComboBox<>();
+    private final JComboBox<OpcaoItem>     comboEquipe  = new JComboBox<>();
     private final JFormattedTextField      campInicio   = DateUtils.campData();
     private final JFormattedTextField      campPrevisao = DateUtils.campData();
 
@@ -86,6 +90,7 @@ public class GestaoProjetoPanel extends JPanel {
                 "Descrição:",             new JScrollPane(campDesc),
                 "Status:",                comboStatus,
                 "Gerente:",               comboGerente,
+                "Equipe:",                comboEquipe,
                 "Início (dd/MM/yyyy):",   campInicio,
                 "Previsão (dd/MM/yyyy):", campPrevisao);
 
@@ -258,14 +263,19 @@ public class GestaoProjetoPanel extends JPanel {
             @Override protected Object[] doInBackground() {
                 Projeto p = projetoCtrl.buscarPorId(projetoId);
                 List<Usuario> gerentes = usuarioCtrl.listarPorPerfil(Perfil.GERENTE);
-                return new Object[]{p, gerentes};
+                List<Equipe>  equipes  = equipeCtrl.listarEquipes().stream()
+                        .filter(e -> !equipeCtrl.listarMembros(e.getId()).isEmpty())
+                        .toList();
+                return new Object[]{p, gerentes, equipes};
             }
             @Override @SuppressWarnings("unchecked")
             protected void done() {
                 try {
                     Object[] resultado = get();
-                    Projeto p = (Projeto) resultado[0];
+                    Projeto       p        = (Projeto)       resultado[0];
                     List<Usuario> gerentes = (List<Usuario>) resultado[1];
+                    List<Equipe>  equipes  = (List<Equipe>)  resultado[2];
+
                     campNome.setText(p.getNome());
                     campDesc.setText(p.getDescricao() != null ? p.getDescricao() : "");
                     if (p.getDataInicio()   != null) campInicio.setText(DateUtils.format(p.getDataInicio()));
@@ -283,6 +293,17 @@ public class GestaoProjetoPanel extends JPanel {
                         for (int i = 0; i < comboGerente.getItemCount(); i++) {
                             if (comboGerente.getItemAt(i).id().equals(p.getGerente().getId())) {
                                 comboGerente.setSelectedIndex(i); break;
+                            }
+                        }
+                    }
+
+                    comboEquipe.removeAllItems();
+                    for (Equipe e : equipes)
+                        comboEquipe.addItem(new OpcaoItem(e.getId(), e.getNome()));
+                    if (p.getEquipe() != null) {
+                        for (int i = 0; i < comboEquipe.getItemCount(); i++) {
+                            if (comboEquipe.getItemAt(i).id().equals(p.getEquipe().getId())) {
+                                comboEquipe.setSelectedIndex(i); break;
                             }
                         }
                     }
@@ -347,6 +368,13 @@ public class GestaoProjetoPanel extends JPanel {
                     JOptionPane.WARNING_MESSAGE);
             return;
         }
+        OpcaoItem equipeItem = (OpcaoItem) comboEquipe.getSelectedItem();
+        if (equipeItem == null) {
+            JOptionPane.showMessageDialog(this, "Selecione uma equipe.", "Aviso",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        UUID      equipeId  = equipeItem.id();
         UUID      gerenteId = gerenteItem.id();
         String    nome      = campNome.getText().trim();
         String    desc      = campDesc.getText().trim();
@@ -384,7 +412,7 @@ public class GestaoProjetoPanel extends JPanel {
                 // Acceptable limitation for this scope — staging is preserved on error.
                 // 1. Projeto
                 Projeto atual = projetoCtrl.buscarPorId(projetoId);
-                projetoCtrl.atualizarProjeto(projetoId, nome, desc, inicio, previsao, gerenteId, null);
+                projetoCtrl.atualizarProjeto(projetoId, nome, desc, inicio, previsao, gerenteId, equipeId);
                 if (novoStatus == StatusProjeto.CONCLUIDO
                         && atual.getStatus() != StatusProjeto.CONCLUIDO) {
                     projetoCtrl.encerrarProjeto(projetoId, dataFimHolder[0]);
@@ -607,7 +635,13 @@ public class GestaoProjetoPanel extends JPanel {
     // ------------------------------------------------------------------
 
     private JComboBox<OpcaoItem> montarComboResponsavel() {
-        List<Usuario> usuarios = usuarioCtrl.listarUsuarios();
+        OpcaoItem equipeItem = (OpcaoItem) comboEquipe.getSelectedItem();
+        List<Usuario> usuarios;
+        if (equipeItem != null && equipeItem.id() != null) {
+            usuarios = equipeCtrl.listarMembros(equipeItem.id());
+        } else {
+            usuarios = usuarioCtrl.listarUsuarios();
+        }
         OpcaoItem[] opcoes = new OpcaoItem[usuarios.size() + 1];
         opcoes[0] = new OpcaoItem(null, "(sem responsável)");
         for (int i = 0; i < usuarios.size(); i++) {
