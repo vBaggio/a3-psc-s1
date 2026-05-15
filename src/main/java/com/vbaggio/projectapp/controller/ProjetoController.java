@@ -74,6 +74,10 @@ public class ProjetoController {
 
         if (equipeId != null) {
             Equipe equipe = resolverEquipe(equipeId);
+            List<Usuario> membros = equipeRepo.listarMembrosDaEquipe(equipeId);
+            if (membros.isEmpty()) {
+                throw new IllegalArgumentException("A equipe deve ter ao menos 1 membro para ser vinculada a um projeto.");
+            }
             projeto.setEquipe(equipe);
         }
 
@@ -119,12 +123,15 @@ public class ProjetoController {
 
         if (equipeId != null) {
             Equipe equipe = resolverEquipe(equipeId);
+            List<Usuario> novosMembros = equipeRepo.listarMembrosDaEquipe(equipeId);
+            if (novosMembros.isEmpty()) {
+                throw new IllegalArgumentException("A equipe deve ter ao menos 1 membro para ser vinculada a um projeto.");
+            }
 
             // Validação de troca de equipe
             boolean trocandoEquipe = projeto.getEquipe() == null
                     || !projeto.getEquipe().getId().equals(equipeId);
             if (trocandoEquipe) {
-                List<Usuario> novosMembros = equipeRepo.listarMembrosDaEquipe(equipeId);
                 Set<UUID> membroIds = novosMembros.stream()
                         .map(Usuario::getId)
                         .collect(Collectors.toSet());
@@ -271,13 +278,9 @@ public class ProjetoController {
     }
 
     private Equipe resolverEquipe(UUID equipeId) {
-        Equipe equipe = equipeRepo.buscarPorId(equipeId)
-                .orElseThrow(() -> new IllegalArgumentException("Equipe não encontrada"));
-        List<Usuario> membros = equipeRepo.listarMembrosDaEquipe(equipeId);
-        if (membros.isEmpty()) {
-            throw new IllegalArgumentException("Equipe deve ter pelo menos um membro");
-        }
-        return equipe;
+        if (equipeId == null) throw new IllegalArgumentException("A equipe do projeto é obrigatória.");
+        return equipeRepo.buscarPorId(equipeId)
+                .orElseThrow(() -> new IllegalArgumentException("Equipe não encontrada: " + equipeId));
     }
 
     private Usuario resolverGerente(UUID gerenteId) {
