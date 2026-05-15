@@ -154,8 +154,8 @@ public class EquipeRepository {
             Equipe equipe   = em.find(Equipe.class, equipeId);
             Projeto projeto = em.find(Projeto.class, projetoId);
             if (equipe != null && projeto != null && !equipe.getProjetos().contains(projeto)) {
-                equipe.addProjeto(projeto);
-                em.merge(equipe);
+                projeto.setEquipe(equipe);
+                em.merge(projeto);
             }
             em.getTransaction().commit();
         } catch (Exception e) {

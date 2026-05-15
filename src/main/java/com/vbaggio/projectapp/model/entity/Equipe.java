@@ -28,12 +28,7 @@ public class Equipe {
     )
     private List<Usuario> membros = new ArrayList<>();
 
-    @ManyToMany
-    @JoinTable(
-        name = "equipe_projeto",
-        joinColumns = @JoinColumn(name = "equipe_id"),
-        inverseJoinColumns = @JoinColumn(name = "projeto_id")
-    )
+    @OneToMany(mappedBy = "equipe")
     private List<Projeto> projetos = new ArrayList<>();
 
     public Equipe() {}
@@ -46,5 +41,4 @@ public class Equipe {
     public List<Usuario> getMembros() { return membros; }
     public void addMembro(Usuario usuario) { this.membros.add(usuario); }
     public List<Projeto> getProjetos() { return projetos; }
-    public void addProjeto(Projeto projeto) { this.projetos.add(projeto); }
 }
