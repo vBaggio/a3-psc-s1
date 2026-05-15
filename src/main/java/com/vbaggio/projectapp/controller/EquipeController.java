@@ -3,8 +3,10 @@ package com.vbaggio.projectapp.controller;
 import com.vbaggio.projectapp.model.entity.Equipe;
 import com.vbaggio.projectapp.model.entity.Usuario;
 import com.vbaggio.projectapp.repository.EquipeRepository;
+import com.vbaggio.projectapp.repository.TarefaRepository;
 import com.vbaggio.projectapp.repository.UsuarioRepository;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -18,10 +20,12 @@ public class EquipeController {
 
     private final EquipeRepository  equipeRepo;
     private final UsuarioRepository usuarioRepo;
+    private final TarefaRepository  tarefaRepo;
 
     public EquipeController() {
         this.equipeRepo  = new EquipeRepository();
         this.usuarioRepo = new UsuarioRepository();
+        this.tarefaRepo  = new TarefaRepository();
     }
 
     /**
@@ -76,19 +80,29 @@ public class EquipeController {
      * @param usuarioId UUID do usuário a ser removido
      */
     public void removerMembro(UUID equipeId, UUID usuarioId) {
-        buscarPorId(equipeId);
+        Equipe equipe = buscarPorId(equipeId);
 
         List<Usuario> membrosAtuais = equipeRepo.listarMembrosDaEquipe(equipeId);
         boolean ultimoMembro = membrosAtuais.size() == 1
                 && membrosAtuais.get(0).getId().equals(usuarioId);
 
-        if (ultimoMembro) {
-            Equipe equipe = buscarPorId(equipeId);
-            if (!equipe.getProjetos().isEmpty()) {
-                throw new IllegalStateException(
-                        "Não é possível remover o último membro de uma equipe com projeto(s) vinculado(s)."
-                );
-            }
+        if (ultimoMembro && !equipe.getProjetos().isEmpty()) {
+            throw new IllegalStateException(
+                    "Não é possível remover o último membro de uma equipe com projeto(s) vinculado(s)."
+            );
+        }
+
+        List<String> conflitos = new ArrayList<>();
+        for (var p : equipe.getProjetos()) {
+            tarefaRepo.listarPorProjeto(p.getId()).stream()
+                    .filter(t -> t.getResponsavel() != null
+                            && t.getResponsavel().getId().equals(usuarioId))
+                    .forEach(t -> conflitos.add("'" + t.getNome() + "' no projeto '" + p.getNome() + "'"));
+        }
+        if (!conflitos.isEmpty()) {
+            throw new IllegalStateException(
+                    "Não é possível remover o membro pois é responsável pelas seguintes tarefas:\n"
+                    + String.join("\n", conflitos));
         }
 
         equipeRepo.removerMembro(equipeId, usuarioId);
