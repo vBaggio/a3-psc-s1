@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import com.vbaggio.projectapp.model.entity.Equipe;
 
 @Entity
 @Table(name = "projeto")
@@ -39,6 +40,10 @@ public class Projeto {
     @JoinColumn(name = "gerente_id")
     private Usuario gerente;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "equipe_id")
+    private Equipe equipe;
+
     @OneToMany(mappedBy = "projeto", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Tarefa> tarefas = new ArrayList<>();
 
@@ -59,5 +64,7 @@ public class Projeto {
     public void setStatus(StatusProjeto status) { this.status = status; }
     public Usuario getGerente() { return gerente; }
     public void setGerente(Usuario gerente) { this.gerente = gerente; }
+    public Equipe getEquipe() { return equipe; }
+    public void setEquipe(Equipe equipe) { this.equipe = equipe; }
     public List<Tarefa> getTarefas() { return tarefas; }
 }
