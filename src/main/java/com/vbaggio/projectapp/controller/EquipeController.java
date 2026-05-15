@@ -86,7 +86,7 @@ public class EquipeController {
             Equipe equipe = buscarPorId(equipeId);
             if (!equipe.getProjetos().isEmpty()) {
                 throw new IllegalStateException(
-                        "Não é possível remover o último membro de uma equipe alocada em projeto(s)."
+                        "Não é possível remover o último membro de uma equipe com projeto(s) vinculado(s)."
                 );
             }
         }
@@ -163,7 +163,7 @@ public class EquipeController {
 
         if (!equipe.getProjetos().isEmpty()) {
             throw new IllegalStateException(
-                    "Não é possível remover uma equipe que está alocada em projeto(s)."
+                    "Não é possível remover uma equipe que possui projeto(s) vinculado(s)."
             );
         }
 
