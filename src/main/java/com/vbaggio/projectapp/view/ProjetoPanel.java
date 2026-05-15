@@ -1,7 +1,9 @@
 package com.vbaggio.projectapp.view;
 
+import com.vbaggio.projectapp.controller.EquipeController;
 import com.vbaggio.projectapp.controller.ProjetoController;
 import com.vbaggio.projectapp.controller.UsuarioController;
+import com.vbaggio.projectapp.model.entity.Equipe;
 import com.vbaggio.projectapp.model.entity.Projeto;
 import com.vbaggio.projectapp.model.entity.Usuario;
 import com.vbaggio.projectapp.model.enums.Perfil;
@@ -30,9 +32,10 @@ public class ProjetoPanel extends JPanel {
 
     private final ProjetoController ctrl        = new ProjetoController();
     private final UsuarioController usuarioCtrl = new UsuarioController();
+    private final EquipeController  equipeCtrl  = new EquipeController();
 
     private final DefaultTableModel modelo = new DefaultTableModel(
-            new String[]{"ID", "Nome", "Status", "Início", "Previsão", "Gerente"}, 0) {
+            new String[]{"ID", "Nome", "Status", "Início", "Previsão", "Gerente", "Equipe"}, 0) {
         @Override public boolean isCellEditable(int r, int c) { return false; }
     };
     private final JTable tabela = tabelaComMensagem(modelo, "Nenhum projeto cadastrado. Clique em 'Novo' para começar.");
@@ -51,6 +54,7 @@ public class ProjetoPanel extends JPanel {
         tabela.getColumnModel().getColumn(3).setPreferredWidth(80);
         tabela.getColumnModel().getColumn(4).setPreferredWidth(80);
         tabela.getColumnModel().getColumn(5).setPreferredWidth(140);
+        tabela.getColumnModel().getColumn(6).setPreferredWidth(140);
         tabela.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -115,12 +119,27 @@ public class ProjetoPanel extends JPanel {
                 .toArray(OpcaoItem[]::new);
         JComboBox<OpcaoItem> comboGerente = new JComboBox<>(opcoesGerente);
 
+        List<Equipe> equipes = equipeCtrl.listarEquipes().stream()
+                .filter(e -> !equipeCtrl.listarMembros(e.getId()).isEmpty())
+                .toList();
+        if (equipes.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "Não há equipes com membros cadastrados. Cadastre uma equipe com ao menos 1 membro antes de criar um projeto.",
+                    "Aviso", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        OpcaoItem[] opcoesEquipe = equipes.stream()
+                .map(e -> new OpcaoItem(e.getId(), e.getNome()))
+                .toArray(OpcaoItem[]::new);
+        JComboBox<OpcaoItem> comboEquipe = new JComboBox<>(opcoesEquipe);
+
         JPanel form = montarForm(
                 "Nome:", campNome,
                 "Descrição:", new JScrollPane(campDesc),
                 "Início (dd/MM/yyyy):", campInicio,
                 "Previsão (dd/MM/yyyy):", campPrevisao,
-                "Gerente:", comboGerente);
+                "Gerente:", comboGerente,
+                "Equipe:", comboEquipe);
 
         while (true) {
             int op = JOptionPane.showConfirmDialog(this, form, "Novo Projeto",
@@ -128,10 +147,11 @@ public class ProjetoPanel extends JPanel {
             if (op != JOptionPane.OK_OPTION) return;
             try {
                 UUID gerenteId = ((OpcaoItem) comboGerente.getSelectedItem()).id();
+                UUID equipeId  = ((OpcaoItem) comboEquipe.getSelectedItem()).id();
                 ctrl.criarProjeto(campNome.getText().trim(), campDesc.getText().trim(),
                         DateUtils.parse(campInicio.getText()),
                         DateUtils.parse(campPrevisao.getText()),
-                        gerenteId, null);
+                        gerenteId, equipeId);
                 scrollParaFim = true;
                 carregar();
                 return;
@@ -223,7 +243,8 @@ public class ProjetoPanel extends JPanel {
                                 p.getId().toString(), p.getNome(), p.getStatus(),
                                 DateUtils.format(p.getDataInicio()),
                                 DateUtils.format(p.getDataPrevisao()),
-                                p.getGerente() != null ? p.getGerente().getNome() : ""
+                                p.getGerente() != null ? p.getGerente().getNome() : "",
+                                p.getEquipe()  != null ? p.getEquipe().getNome()  : ""
                         });
                     }
                     if (scrollParaFim && modelo.getRowCount() > 0) {
