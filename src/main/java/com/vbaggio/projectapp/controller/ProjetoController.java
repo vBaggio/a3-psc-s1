@@ -12,7 +12,9 @@ import com.vbaggio.projectapp.repository.UsuarioRepository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Controller responsável pelas regras de negócio da entidade {@link Projeto}.
@@ -117,6 +119,27 @@ public class ProjetoController {
 
         if (equipeId != null) {
             Equipe equipe = resolverEquipe(equipeId);
+
+            // Validação de troca de equipe
+            boolean trocandoEquipe = projeto.getEquipe() == null
+                    || !projeto.getEquipe().getId().equals(equipeId);
+            if (trocandoEquipe) {
+                List<Usuario> novosMembros = equipeRepo.listarMembrosDaEquipe(equipeId);
+                Set<UUID> membroIds = novosMembros.stream()
+                        .map(Usuario::getId)
+                        .collect(Collectors.toSet());
+                List<String> conflitos = tarefaRepo.listarPorProjeto(id).stream()
+                        .filter(t -> t.getResponsavel() != null
+                                && !membroIds.contains(t.getResponsavel().getId()))
+                        .map(t -> t.getNome() + " → " + t.getResponsavel().getNome())
+                        .toList();
+                if (!conflitos.isEmpty()) {
+                    throw new IllegalStateException(
+                            "Não é possível trocar a equipe pois as seguintes tarefas possuem "
+                            + "responsáveis fora da nova equipe:\n" + String.join("\n", conflitos));
+                }
+            }
+
             projeto.setEquipe(equipe);
         }
 
