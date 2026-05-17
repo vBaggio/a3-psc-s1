@@ -153,7 +153,7 @@ public class RelatorioPanel extends JPanel {
                     modeloDesempenho.addRow(new Object[]{"Pendentes",          r.tarefasPendentes()});
                     modeloDesempenho.addRow(new Object[]{"Canceladas",         r.tarefasCanceladas()});
                     modeloDesempenho.addRow(new Object[]{"Vencidas (abertas)", r.tarefasVencidas()});
-                    modeloDesempenho.addRow(new Object[]{"% de conclusão",     r.percentualConclusao() + "%"});
+                    modeloDesempenho.addRow(new Object[]{"% de conclusão (excl. canceladas)", r.percentualConclusao() + "%"});
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(RelatorioPanel.this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
                 }
