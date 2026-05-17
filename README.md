@@ -136,5 +136,3 @@ Na tela de login, utilize um dos usuários criados automaticamente pelas migrati
 | `admin` | `123` | Administrador |
 | `gerente` | `123` | Gerente |
 | `usuario` | `123` | Colaborador |
-
-> Todos os usuários possuem acesso completo ao sistema. O campo **Perfil** é um atributo de classificação do usuário dentro do domínio, sem restrição de funcionalidades na interface.
