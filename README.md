@@ -131,10 +131,10 @@ mvn compile exec:java -Dexec.mainClass="com.vbaggio.projectapp.Application"
 ### 4. Acessar o sistema
 Na tela de login, utilize um dos usuários criados automaticamente pelas migrations:
 
-| Login | Senha | Perfil | Acesso |
-|-------|-------|--------|--------|
-| `admin` | `123` | Administrador | Gerencia usuários, cargos e equipes |
-| `gerente` | `123` | Gerente | Cria e gerencia projetos e tarefas |
-| `usuario` | `123` | Colaborador | Visualiza projetos e tarefas atribuídas |
+| Login | Senha | Perfil |
+|-------|-------|--------|
+| `admin` | `123` | Administrador |
+| `gerente` | `123` | Gerente |
+| `usuario` | `123` | Colaborador |
 
-> Para avaliação, recomenda-se iniciar com o perfil **`gerente`** — ele possui acesso completo ao módulo de projetos, equipes e relatórios de desempenho.
+> Todos os usuários possuem acesso completo ao sistema. O campo **Perfil** é um atributo de classificação do usuário dentro do domínio, sem restrição de funcionalidades na interface.
