@@ -96,20 +96,6 @@ Correção do modelo de dados equipe↔projeto de ManyToMany para ManyToOne: mig
 - 👉 [Sprint Backlog](docs/sprints/sprint-08/backlog.md)
 - 👉 [Relatório de Desenvolvimento](docs/sprints/sprint-08/relatorio.md)
 
-## 👤 Usuários e Equipe Padrão
-
-As migrations Flyway criam automaticamente três usuários (um por perfil) e uma equipe com todos como membros:
-
-| Login | Senha | Perfil |
-|-------|-------|--------|
-| `admin` | `123` | Administrador |
-| `gerente` | `123` | Gerente |
-| `usuario` | `123` | Colaborador |
-
-> **Equipe Padrão** — criada automaticamente pela migration V4 com os três usuários acima como membros.
-
----
-
 ## 🚀 Como Executar Localmente
 
 ### Pré-requisitos
@@ -118,9 +104,17 @@ As migrations Flyway criam automaticamente três usuários (um por perfil) e uma
 - Docker e Docker Compose
 
 ### 1. Configurar credenciais do banco
-Copie o template e ajuste as credenciais para seu ambiente local:
+Copie o template de configuração:
 ```bash
 cp src/main/resources/db.properties.example src/main/resources/db.properties
+```
+O arquivo gerado já pode ser usado com os valores padrão do Docker Compose:
+```properties
+db.url=jdbc:postgresql://localhost:5433/projectapp
+db.usuario=postgres
+db.senha=postgres
+db.driver=org.postgresql.Driver
+db.persistence_unit=projectapp-pu
 ```
 
 ### 2. Subir o banco de dados
@@ -128,12 +122,19 @@ cp src/main/resources/db.properties.example src/main/resources/db.properties
 docker compose up -d
 ```
 
-### 3. Executar as migrações Flyway
-```bash
-mvn flyway:migrate
-```
-
-### 4. Compilar e executar a aplicação
+### 3. Compilar e executar a aplicação
 ```bash
 mvn compile exec:java -Dexec.mainClass="com.vbaggio.projectapp.Application"
 ```
+> As migrações Flyway são executadas automaticamente na inicialização — não é necessário rodá-las manualmente.
+
+### 4. Acessar o sistema
+Na tela de login, utilize um dos usuários criados automaticamente pelas migrations:
+
+| Login | Senha | Perfil | Acesso |
+|-------|-------|--------|--------|
+| `admin` | `123` | Administrador | Gerencia usuários, cargos e equipes |
+| `gerente` | `123` | Gerente | Cria e gerencia projetos e tarefas |
+| `usuario` | `123` | Colaborador | Visualiza projetos e tarefas atribuídas |
+
+> Para avaliação, recomenda-se iniciar com o perfil **`gerente`** — ele possui acesso completo ao módulo de projetos, equipes e relatórios de desempenho.
