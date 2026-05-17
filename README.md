@@ -52,7 +52,7 @@ O desenvolvimento arquitetural e o processo avaliativo do sistema iteram em proc
 | **Sprint 5** | 19/04 – 25/04/2026 | Interface Gráfica (Swing) + FlatLaf | ✅ Completo |
 | **Sprint 6** | 26/04 – 02/05/2026 | Relatórios de Desempenho | ✅ Completo |
 | **Sprint 7** | 03/05 – 07/05/2026 | Qualidade de UI & Redesign do Módulo de Projetos | ✅ Completo |
-| **Sprint 8** | 14/05 – 21/05/2026 | Vínculo Equipe↔Projeto & Restrição de Responsável de Tarefa | 🔄 Em andamento |
+| **Sprint 8** | 14/05 – 21/05/2026 | Vínculo Equipe↔Projeto & Restrição de Responsável de Tarefa | ✅ Completo |
 
 ---
 
@@ -91,9 +91,10 @@ Melhorias transversais de UX seguidas do redesign do módulo de projetos e taref
 - 👉 [Sprint Backlog](docs/sprints/sprint-07/backlog.md)
 - 👉 [Relatório de Desenvolvimento](docs/sprints/sprint-07/relatorio.md)
 
-#### Sprint 8 — Vínculo Equipe↔Projeto & Restrição de Responsável de Tarefa `14/05 – 21/05/2026` 🔄
-Correção do modelo de dados equipe↔projeto de ManyToMany para ManyToOne: migration V5 dropa `equipe_projeto` e adiciona `equipe_id` em `projeto`, entidades e repositories ajustados. UI atualizada com seleção de equipe na criação e na gestão de projetos, coluna Equipe na listagem, e restrição de responsável de tarefa aos membros da equipe vinculada.
+#### Sprint 8 — Vínculo Equipe↔Projeto & Restrição de Responsável de Tarefa `14/05 – 21/05/2026` ✅
+Correção do modelo de dados equipe↔projeto de ManyToMany para ManyToOne: migration V5 dropa `equipe_projeto` e adiciona `equipe_id` em `projeto`, entidades e repositories ajustados. Migration V6 aplica `NOT NULL` com backfill e cria quatro índices FK ausentes. UI atualizada com seleção de equipe na criação e na gestão de projetos, coluna Equipe na listagem, e restrição de responsável de tarefa aos membros da equipe vinculada.
 - 👉 [Sprint Backlog](docs/sprints/sprint-08/backlog.md)
+- 👉 [Relatório de Desenvolvimento](docs/sprints/sprint-08/relatorio.md)
 
 ## 👤 Usuários e Equipe Padrão
 

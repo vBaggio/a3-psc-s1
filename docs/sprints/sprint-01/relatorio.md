@@ -1,4 +1,4 @@
-# 📊 Relatório Semanal de Desenvolvimento - Sprint 1
+# Relatório Semanal de Desenvolvimento - Sprint 1
 
 **Responsável Principal:** Vinícius Baggio  
 **Período Avaliado:** 22/03/2026 a 28/03/2026  
@@ -24,6 +24,12 @@ O desafio mais relevante nesta semana 1 focava-se no problema da escalabilidade 
 
 * **Minha Resolução de Software:** Deleguei ao Framework de Intercomunicação (Hibernate via `@ManyToMany`). Com essa adoção, a construção transiente (exemplo: Salvar dados em tabela Associative de N:M) será executada no meu escopo interno de Build - alocando em mim somente as rotinas nativas primárias (ex: chamar `equipe.addProj(xyz)`). 
 
-## 4. Anexos Adicionais da Semana
-* Todos os Códigos Fundadores embarcados.
-* Os relatórios oficiais imagéticos residem perfeitamente organizados e estáticos em minha raiz corporativa: `/docs/assets/`.
+## 4. Artefatos Entregues
+
+| Artefato | Caminho | Operação |
+|----------|---------|----------|
+| Diagrama Entidade-Relacionamento (DER) | `docs/assets/a3-der.svg` / `docs/assets/a3.drawio` | Criado |
+| Diagrama de Classes UML | `docs/assets/a3-uml.svg` / `docs/assets/a3.asta` | Criado |
+| Schema DDL inicial | `src/main/resources/db/migration/V1__Create_schema.sql` | Criado |
+| Entidades de domínio (POJOs iniciais) | `src/main/java/.../model/entity/` | Criado |
+| Configuração do repositório e `.gitignore` | `.gitignore` | Criado |

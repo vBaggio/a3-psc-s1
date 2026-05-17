@@ -1,4 +1,4 @@
-# 📋 Sprint Backlog - Sprint 1
+# Sprint Backlog - Sprint 1
 
 **Período Inicial/Final:** 22/03/2026 a 28/03/2026  
 **Responsável do Projeto:** Vinícius Baggio  
@@ -6,7 +6,7 @@
 
 ---
 
-## 🎯 Tarefas Catalogadas (Backlog Items)
+## Tarefas Catalogadas (Backlog Items)
 
 | ID | Descrição da Tarefa | Status |
 |----|----------------------|--------|
@@ -19,7 +19,7 @@
 
 ---
 
-## 🛠️ Ferramentas Adotadas na Sprint
+## Ferramentas Adotadas na Sprint
 - **Projeção Relacional:** Extensão Mermaid.js / Draw.io
 - **Projeção de Classes e Engenharia:** Astah (Professional Edition)
 - **Editor de Texto:** VS Code
