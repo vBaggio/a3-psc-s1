@@ -44,6 +44,7 @@ A **Fase 6** reuniu correções identificadas durante a execução: eliminação
 | **14/05/2026** | **Bugfix — V6 falhava em bases com dados pré-existentes:** A migration V6 tentava aplicar `NOT NULL` em `equipe_id` e `gerente_id` sem garantir que todas as linhas possuíam valor. Em bases criadas antes da Sprint 8, `equipe_id` era nulo em todos os projetos. Adicionado bloco de backfill antes das constraints: projetos sem `equipe_id` recebem a primeira equipe disponível; projetos sem `gerente_id` recebem o primeiro gerente disponível (defensivo). |
 | **14/05/2026** | **Bugfix — edição de tarefa bloqueada para status `CONCLUIDA`/`CANCELADA`:** `TarefaController.atualizarTarefa()` lançava `IllegalStateException` para tarefas com esses status, impedindo que o gerente corrigisse dados de tarefas já finalizadas. A restrição foi identificada como excessiva para o fluxo de gestão e removida. |
 | **15/05/2026** | **`EquipeController` — bloqueio de remoção de membro responsável:** Adicionada validação em `removerMembro(UUID equipeId, UUID usuarioId)`: antes de remover, verifica se o usuário é responsável por alguma tarefa em projeto da equipe. Se for, lança `IllegalStateException` com mensagem listando as tarefas afetadas. Impede que a remoção gere dados inconsistentes (tarefas com responsável fora da equipe do projeto). |
+| **17/05/2026** | **Bugfix — `reatribuirResponsavel` lançava `IllegalStateException` ao editar tarefa finalizada:** `salvarTudo()` em `GestaoProjetoPanel` chama `reatribuirResponsavel()` para toda tarefa no staging de edições, mesmo quando só o status foi alterado. O método ainda possuía um guard que bloqueava CONCLUIDA/CANCELADA — inconsistente com a permissão de edição introduzida no TSK-19, que havia removido a restrição apenas de `atualizarTarefa()`. Guard removido de `reatribuirResponsavel()`. |
 
 ---
 
@@ -72,6 +73,7 @@ O terceiro desafio foi o design da validação de troca de equipe em `salvarTudo
 | `TarefaController` — remoção de bloqueio de edição por status | `src/main/java/.../controller/TarefaController.java` | Modificado |
 | `ProjetoPanel` — coluna Equipe e `comboEquipe` na criação | `src/main/java/.../view/ProjetoPanel.java` | Modificado |
 | `GestaoProjetoPanel` — `comboEquipe`, filtro de responsável e validação de troca de equipe | `src/main/java/.../view/GestaoProjetoPanel.java` | Modificado |
+| `TarefaController.reatribuirResponsavel()` — remoção de guard por status | `src/main/java/.../controller/TarefaController.java` | Modificado |
 
 ---
 

@@ -138,7 +138,6 @@ public class TarefaController {
      *
      * <p>Regras:</p>
      * <ul>
-     *   <li>Tarefa não pode estar CONCLUIDA ou CANCELADA.</li>
      *   <li>novoResponsavelId null → desatribui o responsável.</li>
      *   <li>novoResponsavelId não null → usuário deve existir.</li>
      * </ul>
@@ -149,13 +148,6 @@ public class TarefaController {
      */
     public Tarefa reatribuirResponsavel(UUID tarefaId, UUID novoResponsavelId) {
         Tarefa tarefa = buscarTarefaOuFalhar(tarefaId);
-
-        if (tarefa.getStatus() == StatusTarefa.CONCLUIDA
-                || tarefa.getStatus() == StatusTarefa.CANCELADA) {
-            throw new IllegalStateException(
-                    "Não é possível reatribuir responsável de tarefa finalizada."
-            );
-        }
 
         if (novoResponsavelId == null) {
             tarefa.setResponsavel(null);

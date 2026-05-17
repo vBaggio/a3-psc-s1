@@ -71,6 +71,7 @@ Itens identificados e resolvidos durante a execução da sprint, não previstos 
 | **TSK-18** | Migration `V6` — adicionar backfill de `equipe_id` e `gerente_id` em linhas existentes antes de aplicar `NOT NULL`, evitando falha de migração em bases com dados pré-existentes. | ✅ Concluído |
 | **TSK-19** | `TarefaController` — permitir edição de campos em tarefas com status `CONCLUIDA` ou `CANCELADA` (bloqueio anterior era excessivo para o fluxo de gestão). | ✅ Concluído |
 | **TSK-20** | `EquipeController` — bloquear remoção de membro que seja responsável por alguma tarefa em projeto da equipe, exibindo mensagem com as tarefas afetadas. | ✅ Concluído |
+| **TSK-21** | `TarefaController.reatribuirResponsavel()` — remover guard que bloqueava reatribuição em tarefas `CONCLUIDA`/`CANCELADA`, inconsistente com a permissão de edição introduzida no TSK-19. `salvarTudo()` em `GestaoProjetoPanel` chama `reatribuirResponsavel` para toda tarefa editada — sem o fix, qualquer edição em tarefa finalizada lançava `IllegalStateException`. | ✅ Concluído |
 
 ---
 
