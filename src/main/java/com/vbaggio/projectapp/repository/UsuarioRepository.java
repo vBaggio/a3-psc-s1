@@ -142,6 +142,25 @@ public class UsuarioRepository {
     }
 
     /**
+     * Conta a quantidade de usuários com um perfil específico.
+     *
+     * @param perfil perfil desejado (ADMINISTRADOR, GERENTE ou COLABORADOR)
+     * @return quantidade de usuários com o perfil informado
+     */
+    public long contarPorPerfil(Perfil perfil) {
+        EntityManager em = JpaUtil.getEntityManager();
+        try {
+            return em.createQuery(
+                    "SELECT COUNT(u) FROM Usuario u WHERE u.perfil = :perfil",
+                    Long.class)
+                    .setParameter("perfil", perfil)
+                    .getSingleResult();
+        } finally {
+            em.close();
+        }
+    }
+
+    /**
      * Atualiza os dados de um Usuário já existente.
      *
      * @param usuario entidade com dados atualizados (id obrigatório)
