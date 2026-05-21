@@ -6,6 +6,7 @@ import com.vbaggio.projectapp.model.entity.Usuario;
 import com.vbaggio.projectapp.model.enums.Perfil;
 import com.vbaggio.projectapp.model.enums.StatusTarefa;
 import com.vbaggio.projectapp.repository.CargoRepository;
+import com.vbaggio.projectapp.repository.ProjetoRepository;
 import com.vbaggio.projectapp.repository.TarefaRepository;
 import com.vbaggio.projectapp.repository.UsuarioRepository;
 import org.mindrot.jbcrypt.BCrypt;
@@ -24,11 +25,13 @@ public class UsuarioController {
     private final UsuarioRepository usuarioRepo;
     private final CargoRepository   cargoRepo;
     private final TarefaRepository  tarefaRepository;
+    private final ProjetoRepository projetoRepo;
 
     public UsuarioController() {
         this.usuarioRepo      = new UsuarioRepository();
         this.cargoRepo        = new CargoRepository();
         this.tarefaRepository = new TarefaRepository();
+        this.projetoRepo      = new ProjetoRepository();
     }
 
     /**
@@ -150,7 +153,15 @@ public class UsuarioController {
      * @return entidade Usuario atualizada
      */
     public Usuario atualizarUsuario(UUID id, String nome, String cpf, String email,
-                                    String login, String novaSenha, Perfil perfil, UUID cargoId) {
+                                    String login, String novaSenha, Perfil perfil,
+                                    UUID cargoId, Usuario caller) {
+        // guard: apenas ADMIN pode editar dados de outro usuário
+        if (!caller.getId().equals(id) && caller.getPerfil() != Perfil.ADMINISTRADOR)
+            throw new IllegalStateException("Sem permissão para editar este usuário.");
+        // guard: apenas ADMIN pode alterar perfil
+        if (perfil != null && caller.getPerfil() != Perfil.ADMINISTRADOR)
+            throw new IllegalStateException("Apenas ADMINISTRADOR pode alterar o perfil de um usuário.");
+
         Usuario usuario = buscarPorId(id);
 
         if (nome   != null && !nome.isBlank())  usuario.setNome(nome.trim());
@@ -178,18 +189,29 @@ public class UsuarioController {
      *
      * @param id UUID do usuário
      */
-    public void removerUsuario(UUID id) {
-        buscarPorId(id); // garante que existe
+    public void removerUsuario(UUID id, Usuario caller) {
+        if (caller.getPerfil() != Perfil.ADMINISTRADOR)
+            throw new IllegalStateException("Apenas ADMINISTRADOR pode remover usuários.");
+
+        Usuario alvo = buscarPorId(id);
+
+        if (alvo.getPerfil() == Perfil.ADMINISTRADOR) {
+            long totalAdmins = usuarioRepo.contarPorPerfil(Perfil.ADMINISTRADOR);
+            if (totalAdmins <= 1)
+                throw new IllegalStateException("Não é possível remover o único ADMINISTRADOR do sistema.");
+        }
+
+        if (projetoRepo.existeProjetoAtivoComGerente(id))
+            throw new IllegalStateException(
+                "Usuário é gerente de projeto(s) ativo(s). Reatribua os projetos antes de remover.");
 
         List<Tarefa> tarefasAtivas = tarefaRepository.listarPorResponsavel(id);
         boolean temTarefaAtiva = tarefasAtivas.stream()
                 .anyMatch(t -> t.getStatus() == StatusTarefa.PENDENTE
                             || t.getStatus() == StatusTarefa.EM_ANDAMENTO);
-        if (temTarefaAtiva) {
+        if (temTarefaAtiva)
             throw new IllegalStateException(
-                    "Usuário possui tarefas ativas (PENDENTE ou EM_ANDAMENTO). Reatribua as tarefas antes de remover o usuário."
-            );
-        }
+                "Usuário possui tarefas ativas (PENDENTE ou EM_ANDAMENTO). Reatribua as tarefas antes de remover o usuário.");
 
         usuarioRepo.deletar(id);
     }
