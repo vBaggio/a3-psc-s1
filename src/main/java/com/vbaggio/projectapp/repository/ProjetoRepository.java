@@ -87,7 +87,7 @@ public class ProjetoRepository {
                 "LEFT JOIN FETCH p.gerente " +
                 "LEFT JOIN FETCH p.equipe eq " +
                 "LEFT JOIN eq.membros m " +
-                "WHERE p.gerente.id = :usuarioId OR m.id = :usuarioId " +
+                "WHERE (p.gerente IS NOT NULL AND p.gerente.id = :usuarioId) OR m.id = :usuarioId " +
                 "ORDER BY p.nome",
                 Projeto.class)
                 .setParameter("usuarioId", usuarioId)
@@ -110,11 +110,11 @@ public class ProjetoRepository {
             Long count = em.createQuery(
                 "SELECT COUNT(p) FROM Projeto p " +
                 "WHERE p.gerente.id = :gerenteId " +
-                "AND p.status IN (:s1, :s2)",
+                "AND p.status IN (:statusPlanejado, :statusEmAndamento)",
                 Long.class)
                 .setParameter("gerenteId", gerenteId)
-                .setParameter("s1", StatusProjeto.PLANEJADO)
-                .setParameter("s2", StatusProjeto.EM_ANDAMENTO)
+                .setParameter("statusPlanejado", StatusProjeto.PLANEJADO)
+                .setParameter("statusEmAndamento", StatusProjeto.EM_ANDAMENTO)
                 .getSingleResult();
             return count > 0;
         } finally {
