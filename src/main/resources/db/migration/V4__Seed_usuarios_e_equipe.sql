@@ -14,7 +14,7 @@ VALUES (
     'gerente',
     '$2a$10$hj2UvKMFYHSEg07bMcn2JuZkT/xKXXkvRtVBPeXcFTICqIT7sRNxi',
     'GERENTE',
-    NULL
+    'cc000002-0000-0000-0000-000000000000'
 );
 
 INSERT INTO usuario (id, nome, cpf, email, login, senha, perfil, cargo_id)
@@ -26,7 +26,7 @@ VALUES (
     'usuario',
     '$2a$10$hj2UvKMFYHSEg07bMcn2JuZkT/xKXXkvRtVBPeXcFTICqIT7sRNxi',
     'COLABORADOR',
-    NULL
+    'cc000003-0000-0000-0000-000000000000'
 );
 
 INSERT INTO equipe (id, nome, descricao)
@@ -37,19 +37,10 @@ VALUES (
 );
 
 INSERT INTO equipe_membro (equipe_id, usuario_id)
-VALUES (
-    'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
-    (SELECT id FROM usuario WHERE login = 'admin')
-);
+VALUES ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', '00000000-0000-0000-0000-000000000001');
 
 INSERT INTO equipe_membro (equipe_id, usuario_id)
-VALUES (
-    'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
-    '11111111-1111-1111-1111-111111111111'
-);
+VALUES ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', '11111111-1111-1111-1111-111111111111');
 
 INSERT INTO equipe_membro (equipe_id, usuario_id)
-VALUES (
-    'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
-    '22222222-2222-2222-2222-222222222222'
-);
+VALUES ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', '22222222-2222-2222-2222-222222222222');

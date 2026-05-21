@@ -464,8 +464,8 @@ public class GestaoProjetoPanel extends JPanel {
         tarefasNovas.clear();
         tarefasEditadas.clear();
         tarefasExcluidas.clear();
-        carregarProjeto();
-        carregarTarefas();
+        Window w = SwingUtilities.getWindowAncestor(this);
+        if (w != null) w.dispose();
     }
 
     private DadosTarefa dadosParaStaging(UUID uuid, int row) {
