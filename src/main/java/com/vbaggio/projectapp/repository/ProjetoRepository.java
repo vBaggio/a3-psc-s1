@@ -73,6 +73,56 @@ public class ProjetoRepository {
     }
 
     /**
+     * Retorna todos os projetos visíveis para um dado usuário:
+     * aqueles em que ele é o gerente ou membro da equipe associada.
+     *
+     * @param usuarioId UUID do usuário
+     * @return lista de projetos visíveis, ordenada pelo nome
+     */
+    public List<Projeto> listarPorMembroOuGerente(UUID usuarioId) {
+        EntityManager em = JpaUtil.getEntityManager();
+        try {
+            return em.createQuery(
+                "SELECT DISTINCT p FROM Projeto p " +
+                "LEFT JOIN FETCH p.gerente " +
+                "LEFT JOIN FETCH p.equipe eq " +
+                "LEFT JOIN eq.membros m " +
+                "WHERE p.gerente.id = :usuarioId OR m.id = :usuarioId " +
+                "ORDER BY p.nome",
+                Projeto.class)
+                .setParameter("usuarioId", usuarioId)
+                .getResultList();
+        } finally {
+            em.close();
+        }
+    }
+
+    /**
+     * Verifica se existe pelo menos um projeto ativo (PLANEJADO ou EM_ANDAMENTO)
+     * com o gerente especificado. Usado para impedir a remoção de gerentes vinculados.
+     *
+     * @param gerenteId UUID do gerente
+     * @return true se houver projetos ativos gerenciados por ele
+     */
+    public boolean existeProjetoAtivoComGerente(UUID gerenteId) {
+        EntityManager em = JpaUtil.getEntityManager();
+        try {
+            Long count = em.createQuery(
+                "SELECT COUNT(p) FROM Projeto p " +
+                "WHERE p.gerente.id = :gerenteId " +
+                "AND p.status IN (:s1, :s2)",
+                Long.class)
+                .setParameter("gerenteId", gerenteId)
+                .setParameter("s1", StatusProjeto.PLANEJADO)
+                .setParameter("s2", StatusProjeto.EM_ANDAMENTO)
+                .getSingleResult();
+            return count > 0;
+        } finally {
+            em.close();
+        }
+    }
+
+    /**
      * Filtra projetos por status.
      *
      * @param status status desejado (PLANEJADO, EM_ANDAMENTO, CONCLUIDO, CANCELADO)
