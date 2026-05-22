@@ -4,6 +4,7 @@ import com.vbaggio.projectapp.controller.EquipeController;
 import com.vbaggio.projectapp.controller.UsuarioController;
 import com.vbaggio.projectapp.model.entity.Equipe;
 import com.vbaggio.projectapp.model.entity.Usuario;
+import com.vbaggio.projectapp.model.enums.Perfil;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -16,8 +17,15 @@ import static com.vbaggio.projectapp.view.TableUtils.tabelaComMensagem;
 
 public class EquipePanel extends JPanel {
 
+    private final Usuario usuarioLogado;
     private final EquipeController  ctrl        = new EquipeController();
     private final UsuarioController usuarioCtrl = new UsuarioController();
+
+    private JButton btnNova;
+    private JButton btnEditarEquipe;
+    private JButton btnExcluirEquipe;
+    private JButton btnAdicionar;
+    private JButton btnRemover;
 
     private final DefaultTableModel modeloEquipes = new DefaultTableModel(
             new String[]{"ID", "Nome", "Descrição"}, 0) {
@@ -31,7 +39,8 @@ public class EquipePanel extends JPanel {
     };
     private final JTable tabelaMembros = tabelaComMensagem(modeloMembros, "Selecione uma equipe para ver os membros.");
 
-    public EquipePanel() {
+    public EquipePanel(Usuario usuario) {
+        this.usuarioLogado = usuario;
         setLayout(new BorderLayout(0, 4));
         setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
@@ -54,6 +63,15 @@ public class EquipePanel extends JPanel {
         });
 
         carregarEquipes();
+
+        if (usuarioLogado.getPerfil() != Perfil.ADMINISTRADOR) {
+            // GERENTE é somente leitura neste painel
+            btnNova.setEnabled(false);
+            btnEditarEquipe.setEnabled(false);
+            btnExcluirEquipe.setEnabled(false);
+            btnAdicionar.setEnabled(false);
+            btnRemover.setEnabled(false);
+        }
     }
 
     private JPanel criarPainelEquipes() {
@@ -61,29 +79,29 @@ public class EquipePanel extends JPanel {
         p.setBorder(BorderFactory.createTitledBorder("Equipes"));
 
         JPanel bar = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
-        JButton btnNova    = new JButton("Nova");
-        JButton btnEditar  = new JButton("Editar");
-        JButton btnExcluir = new JButton("Excluir");
-        bar.add(btnNova); bar.add(btnEditar); bar.add(btnExcluir);
+        btnNova          = new JButton("Nova");
+        btnEditarEquipe  = new JButton("Editar");
+        btnExcluirEquipe = new JButton("Excluir");
+        bar.add(btnNova); bar.add(btnEditarEquipe); bar.add(btnExcluirEquipe);
 
-        btnEditar.setEnabled(false);
-        btnExcluir.setEnabled(false);
+        btnEditarEquipe.setEnabled(false);
+        btnExcluirEquipe.setEnabled(false);
 
         tabelaEquipes.getSelectionModel().addListSelectionListener(e -> {
             if (e.getValueIsAdjusting()) return;
             boolean sel = tabelaEquipes.getSelectedRow() >= 0;
-            btnEditar.setEnabled(sel);
-            btnExcluir.setEnabled(sel);
+            btnEditarEquipe.setEnabled(sel);
+            btnExcluirEquipe.setEnabled(sel);
         });
 
         btnNova.addActionListener(e -> abrirFormularioEquipe(null));
-        btnEditar.addActionListener(e -> {
+        btnEditarEquipe.addActionListener(e -> {
             int linha = tabelaEquipes.getSelectedRow();
             if (linha < 0) { JOptionPane.showMessageDialog(this, "Selecione uma equipe."); return; }
             UUID id = UUID.fromString(modeloEquipes.getValueAt(linha, 0).toString());
             abrirFormularioEquipe(ctrl.buscarPorId(id));
         });
-        btnExcluir.addActionListener(e -> excluirEquipe());
+        btnExcluirEquipe.addActionListener(e -> excluirEquipe());
 
         p.add(bar, BorderLayout.NORTH);
         p.add(new JScrollPane(tabelaEquipes), BorderLayout.CENTER);
@@ -95,8 +113,8 @@ public class EquipePanel extends JPanel {
         p.setBorder(BorderFactory.createTitledBorder("Membros da Equipe Selecionada"));
 
         JPanel bar = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
-        JButton btnAdicionar = new JButton("Adicionar");
-        JButton btnRemover   = new JButton("Remover");
+        btnAdicionar = new JButton("Adicionar");
+        btnRemover   = new JButton("Remover");
         bar.add(btnAdicionar); bar.add(btnRemover);
 
         btnRemover.setEnabled(false);

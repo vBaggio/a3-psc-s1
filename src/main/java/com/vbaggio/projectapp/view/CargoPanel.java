@@ -2,6 +2,8 @@ package com.vbaggio.projectapp.view;
 
 import com.vbaggio.projectapp.controller.CargoController;
 import com.vbaggio.projectapp.model.entity.Cargo;
+import com.vbaggio.projectapp.model.entity.Usuario;
+import com.vbaggio.projectapp.model.enums.Perfil;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -16,6 +18,7 @@ import static com.vbaggio.projectapp.view.TableUtils.tabelaComMensagem;
 
 public class CargoPanel extends JPanel {
 
+    private final Usuario usuario;
     private final CargoController   ctrl  = new CargoController();
     private final DefaultTableModel modelo = new DefaultTableModel(
             new String[]{"ID", "Nome"}, 0) {
@@ -24,12 +27,24 @@ public class CargoPanel extends JPanel {
     private final JTable tabela = tabelaComMensagem(modelo, "Nenhum cargo cadastrado.");
     private boolean scrollParaFim = false;
 
-    public CargoPanel() {
+    private JButton btnNovo;
+    private JButton btnEditar;
+    private JButton btnExcluir;
+
+    public CargoPanel(Usuario usuario) {
+        this.usuario = usuario;
         setLayout(new BorderLayout(0, 4));
         setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
         add(criarToolbar(), BorderLayout.NORTH);
         add(new JScrollPane(tabela), BorderLayout.CENTER);
+
+        if (usuario.getPerfil() != Perfil.ADMINISTRADOR) {
+            // GERENTE é somente leitura neste painel
+            btnNovo.setEnabled(false);
+            btnEditar.setEnabled(false);
+            btnExcluir.setEnabled(false);
+        }
 
         ocultarColuna(0);
         tabela.setAutoCreateRowSorter(true);
@@ -49,9 +64,9 @@ public class CargoPanel extends JPanel {
 
     private JPanel criarToolbar() {
         JPanel bar = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
-        JButton btnNovo    = new JButton("Novo");
-        JButton btnEditar  = new JButton("Editar");
-        JButton btnExcluir = new JButton("Excluir");
+        btnNovo    = new JButton("Novo");
+        btnEditar  = new JButton("Editar");
+        btnExcluir = new JButton("Excluir");
         bar.add(btnNovo); bar.add(btnEditar); bar.add(btnExcluir);
 
         btnEditar.setEnabled(false);

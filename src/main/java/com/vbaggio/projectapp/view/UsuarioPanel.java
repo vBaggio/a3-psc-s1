@@ -19,6 +19,7 @@ import static com.vbaggio.projectapp.view.TableUtils.tabelaComMensagem;
 
 public class UsuarioPanel extends JPanel {
 
+    private final Usuario usuarioLogado;
     private final UsuarioController ctrl      = new UsuarioController();
     private final CargoController   cargoCtrl = new CargoController();
 
@@ -29,12 +30,24 @@ public class UsuarioPanel extends JPanel {
     private final JTable tabela = tabelaComMensagem(modelo, "Nenhum usuário cadastrado.");
     private boolean scrollParaFim = false;
 
-    public UsuarioPanel() {
+    private JButton btnNovo;
+    private JButton btnEditar;
+    private JButton btnExcluir;
+
+    public UsuarioPanel(Usuario usuario) {
+        this.usuarioLogado = usuario;
         setLayout(new BorderLayout(0, 4));
         setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
         add(criarToolbar(), BorderLayout.NORTH);
         add(new JScrollPane(tabela), BorderLayout.CENTER);
+
+        if (usuarioLogado.getPerfil() != Perfil.ADMINISTRADOR) {
+            // GERENTE é somente leitura neste painel
+            btnNovo.setEnabled(false);
+            btnEditar.setEnabled(false);
+            btnExcluir.setEnabled(false);
+        }
 
         ocultarColuna(0);
         tabela.setAutoCreateRowSorter(true);
@@ -59,9 +72,9 @@ public class UsuarioPanel extends JPanel {
 
     private JPanel criarToolbar() {
         JPanel bar = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
-        JButton btnNovo    = new JButton("Novo");
-        JButton btnEditar  = new JButton("Editar");
-        JButton btnExcluir = new JButton("Excluir");
+        btnNovo    = new JButton("Novo");
+        btnEditar  = new JButton("Editar");
+        btnExcluir = new JButton("Excluir");
         bar.add(btnNovo); bar.add(btnEditar); bar.add(btnExcluir);
 
         btnEditar.setEnabled(false);
@@ -150,7 +163,7 @@ public class UsuarioPanel extends JPanel {
                             campNome.getText().trim(), campCpf.getText().trim(),
                             campEmail.getText().trim(), campLogin.getText().trim(),
                             senha.isBlank() ? null : senha,
-                            (Perfil) comboPerfil.getSelectedItem(), cargoSel);
+                            (Perfil) comboPerfil.getSelectedItem(), cargoSel, usuarioLogado);
                 }
                 carregar();
                 return;
@@ -170,7 +183,7 @@ public class UsuarioPanel extends JPanel {
         if (conf != JOptionPane.YES_OPTION) return;
         UUID id = UUID.fromString(modelo.getValueAt(linha, 0).toString());
         try {
-            ctrl.removerUsuario(id);
+            ctrl.removerUsuario(id, usuarioLogado);
             carregar();
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
