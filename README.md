@@ -98,7 +98,7 @@ Correção do modelo de dados equipe↔projeto de ManyToMany para ManyToOne: mig
 - 👉 [Relatório de Desenvolvimento](docs/sprints/sprint-08/relatorio.md)
 
 #### Sprint 9 — Controle de Acesso por Papel Efetivo por Projeto `21/05 – 22/05/2026` ✅
-Implementação de controle de acesso calculado por projeto (`ADMIN > GERENTE_EFETIVO > COLABORADOR > SEM_ACESSO`): 6 guards com parâmetro `caller` nos controllers, `listarProjetosVisiveis` para filtrar projetos por perfil, propagação de `Usuario` via lambda capture em todas as Views, filtro de cards no HomePanel, readonly para GERENTE nos painéis de administração e constraints completas em `GestaoProjetoPanel` com `calcularRole`, `isCellEditable` restrito e combo de responsável bloqueado para COLABORADOR. Inclui cargos pré-cadastrados nas migrations e correção do botão Cancelar.
+Controle de acesso calculado por projeto: guards com `caller` nos controllers, filtro de visibilidade de projetos por perfil, cards do HomePanel filtrados por perfil, painéis de administração em read-only para GERENTE e constraints completas em `GestaoProjetoPanel`. Inclui cargos pré-cadastrados nas migrations.
 - 👉 [Sprint Backlog](docs/sprints/sprint-09/backlog.md)
 - 👉 [Relatório de Desenvolvimento](docs/sprints/sprint-09/relatorio.md)
 
