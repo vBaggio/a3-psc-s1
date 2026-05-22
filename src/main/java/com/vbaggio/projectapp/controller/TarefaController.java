@@ -3,6 +3,7 @@ package com.vbaggio.projectapp.controller;
 import com.vbaggio.projectapp.model.entity.Projeto;
 import com.vbaggio.projectapp.model.entity.Tarefa;
 import com.vbaggio.projectapp.model.entity.Usuario;
+import com.vbaggio.projectapp.model.enums.Perfil;
 import com.vbaggio.projectapp.model.enums.StatusProjeto;
 import com.vbaggio.projectapp.model.enums.StatusTarefa;
 import com.vbaggio.projectapp.repository.ProjetoRepository;
@@ -54,7 +55,7 @@ public class TarefaController {
      * @throws IllegalStateException    se o projeto não aceita novas tarefas
      */
     public Tarefa criarTarefa(String nome, String descricao, LocalDate prazo,
-                              UUID projetoId, UUID responsavelId) {
+                              UUID projetoId, UUID responsavelId, Usuario caller) {
         if (nome == null || nome.isBlank()) {
             throw new IllegalArgumentException("Nome da tarefa é obrigatório.");
         }
@@ -70,6 +71,25 @@ public class TarefaController {
             throw new IllegalStateException(
                     "Não é possível criar tarefa para projeto com status: " + projeto.getStatus()
             );
+        }
+
+        boolean isAdmin = caller.getPerfil() == Perfil.ADMINISTRADOR;
+        boolean isGerenteEfetivo = projeto.getGerente() != null
+                && projeto.getGerente().getId().equals(caller.getId());
+
+        if (!isAdmin && !isGerenteEfetivo) {
+            // COLABORADOR ou GERENTE-membro: self-assignment forçado
+            responsavelId = caller.getId();
+        } else if (isGerenteEfetivo && responsavelId != null) {
+            // GERENTE_EFETIVO: responsável deve ser membro da equipe
+            if (projeto.getEquipe() != null) {
+                UUID finalResp = responsavelId;
+                boolean isMembro = projeto.getEquipe().getMembros().stream()
+                        .anyMatch(m -> m.getId().equals(finalResp));
+                if (!isMembro)
+                    throw new IllegalArgumentException(
+                            "O responsável deve ser membro da equipe do projeto.");
+            }
         }
 
         Tarefa tarefa = new Tarefa();
@@ -146,8 +166,27 @@ public class TarefaController {
      * @param novoResponsavelId UUID do novo responsável (null para desatribuir)
      * @return entidade Tarefa atualizada
      */
-    public Tarefa reatribuirResponsavel(UUID tarefaId, UUID novoResponsavelId) {
+    public Tarefa reatribuirResponsavel(UUID tarefaId, UUID novoResponsavelId, Usuario caller) {
         Tarefa tarefa = buscarTarefaOuFalhar(tarefaId);
+
+        Projeto projeto = projetoRepo.buscarPorId(tarefa.getProjeto().getId())
+                .orElseThrow(() -> new IllegalArgumentException("Projeto não encontrado."));
+
+        boolean isAdmin = caller.getPerfil() == Perfil.ADMINISTRADOR;
+        boolean isGerenteEfetivo = projeto.getGerente() != null
+                && projeto.getGerente().getId().equals(caller.getId());
+        if (!isAdmin && !isGerenteEfetivo)
+            throw new IllegalStateException(
+                    "Apenas ADMINISTRADOR ou o gerente do projeto podem reatribuir tarefas.");
+
+        if (novoResponsavelId != null && projeto.getEquipe() != null) {
+            UUID finalResp = novoResponsavelId;
+            boolean isMembro = projeto.getEquipe().getMembros().stream()
+                    .anyMatch(m -> m.getId().equals(finalResp));
+            if (!isMembro)
+                throw new IllegalArgumentException(
+                        "O novo responsável deve ser membro da equipe do projeto.");
+        }
 
         if (novoResponsavelId == null) {
             tarefa.setResponsavel(null);
