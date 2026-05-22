@@ -4,6 +4,8 @@ import com.vbaggio.projectapp.controller.RelatorioController;
 import com.vbaggio.projectapp.dto.CargaUsuario;
 import com.vbaggio.projectapp.dto.ProjetoOpcao;
 import com.vbaggio.projectapp.dto.ResumoProjeto;
+import com.vbaggio.projectapp.model.entity.Projeto;
+import com.vbaggio.projectapp.model.entity.Usuario;
 import com.vbaggio.projectapp.model.enums.StatusProjeto;
 import com.vbaggio.projectapp.util.DateUtils;
 
@@ -16,12 +18,14 @@ import java.util.Map;
 public class RelatorioPanel extends JPanel {
 
     private final RelatorioController ctrl = new RelatorioController();
+    private final Usuario usuario;
     private JComboBox<ProjetoOpcao> cbProjeto;
     private JPanel cardsResumo;
     private DefaultTableModel modeloDesempenho;
     private DefaultTableModel modeloCarga;
 
-    public RelatorioPanel() {
+    public RelatorioPanel(Usuario usuario) {
+        this.usuario = usuario;
         setLayout(new BorderLayout());
         JTabbedPane tabs = new JTabbedPane();
         tabs.addTab("Resumo Global",          buildResumoGlobalTab());
@@ -166,7 +170,10 @@ public class RelatorioPanel extends JPanel {
         new SwingWorker<List<ProjetoOpcao>, Void>() {
             @Override
             protected List<ProjetoOpcao> doInBackground() {
-                return ctrl.listarProjetosParaCombo();
+                List<Projeto> projetos = ctrl.listarProjetosParaRelatorio(usuario);
+                return projetos.stream()
+                        .map(p -> new ProjetoOpcao(p.getId(), p.getNome()))
+                        .toList();
             }
             @Override
             protected void done() {
