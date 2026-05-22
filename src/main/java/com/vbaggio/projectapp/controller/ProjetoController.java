@@ -104,12 +104,19 @@ public class ProjetoController {
      */
     public void atualizarProjeto(UUID id, String nome, String descricao,
                                   LocalDate dataInicio, LocalDate dataPrevisao,
-                                  UUID gerenteId, UUID equipeId) {
+                                  UUID gerenteId, UUID equipeId, Usuario caller) {
         if (nome == null || nome.isBlank()) {
             throw new IllegalArgumentException("O nome do projeto é obrigatório.");
         }
         validarDatas(dataInicio, dataPrevisao);
         Projeto projeto = buscarPorId(id);
+        if (caller.getPerfil() != Perfil.ADMINISTRADOR && !isGerenteEfetivo(projeto, caller))
+            throw new IllegalStateException("Apenas ADMINISTRADOR ou o gerente do projeto podem editar.");
+        if (gerenteId != null
+                && projeto.getGerente() != null
+                && !gerenteId.equals(projeto.getGerente().getId())
+                && caller.getPerfil() != Perfil.ADMINISTRADOR)
+            throw new IllegalStateException("Apenas ADMINISTRADOR pode trocar o gerente do projeto.");
         if (projeto.getStatus() == StatusProjeto.CONCLUIDO
                 || projeto.getStatus() == StatusProjeto.CANCELADO) {
             throw new IllegalStateException(
@@ -167,8 +174,10 @@ public class ProjetoController {
      * @param novoStatus novo status desejado
      * @return projeto atualizado
      */
-    public Projeto atualizarStatus(UUID projetoId, StatusProjeto novoStatus) {
+    public Projeto atualizarStatus(UUID projetoId, StatusProjeto novoStatus, Usuario caller) {
         Projeto projeto = buscarPorId(projetoId);
+        if (caller.getPerfil() != Perfil.ADMINISTRADOR && !isGerenteEfetivo(projeto, caller))
+            throw new IllegalStateException("Apenas ADMINISTRADOR ou o gerente do projeto podem alterar o status.");
         validarTransicaoStatus(projeto.getStatus(), novoStatus);
         projeto.setStatus(novoStatus);
         Projeto atualizado = projetoRepo.atualizar(projeto);
@@ -189,8 +198,10 @@ public class ProjetoController {
      * @param dataFim   data de encerramento real
      * @return projeto atualizado com status CONCLUIDO
      */
-    public Projeto encerrarProjeto(UUID projetoId, LocalDate dataFim) {
+    public Projeto encerrarProjeto(UUID projetoId, LocalDate dataFim, Usuario caller) {
         Projeto projeto = buscarPorId(projetoId);
+        if (caller.getPerfil() != Perfil.ADMINISTRADOR && !isGerenteEfetivo(projeto, caller))
+            throw new IllegalStateException("Apenas ADMINISTRADOR ou o gerente do projeto podem encerrar o projeto.");
 
         if (projeto.getStatus() != StatusProjeto.EM_ANDAMENTO) {
             throw new IllegalStateException(
@@ -211,10 +222,13 @@ public class ProjetoController {
     /**
      * Remove um projeto e todas as suas tarefas (cascade).
      *
-     * @param id UUID do projeto a ser excluído
+     * @param id     UUID do projeto a ser excluído
+     * @param caller usuário que está realizando a operação
      */
-    public void removerProjeto(UUID id) {
-        buscarPorId(id); // valida existência
+    public void removerProjeto(UUID id, Usuario caller) {
+        if (caller.getPerfil() != Perfil.ADMINISTRADOR)
+            throw new IllegalStateException("Apenas ADMINISTRADOR pode remover projetos.");
+        buscarPorId(id);
         projetoRepo.deletar(id);
     }
 
@@ -225,6 +239,20 @@ public class ProjetoController {
      */
     public List<Projeto> listarProjetos() {
         return projetoRepo.listarTodos();
+    }
+
+    /**
+     * Retorna os projetos visíveis para o usuário informado.
+     * ADMINISTRADORs veem todos; demais veem apenas os que são membro ou gerente.
+     *
+     * @param usuario usuário autenticado
+     * @return lista de projetos visíveis
+     */
+    public List<Projeto> listarProjetosVisiveis(Usuario usuario) {
+        if (usuario.getPerfil() == Perfil.ADMINISTRADOR) {
+            return projetoRepo.listarTodos();
+        }
+        return projetoRepo.listarPorMembroOuGerente(usuario.getId());
     }
 
     /**
@@ -255,6 +283,11 @@ public class ProjetoController {
     // ------------------------------------------------------------------
     // Privados
     // ------------------------------------------------------------------
+
+    private boolean isGerenteEfetivo(Projeto projeto, Usuario caller) {
+        return projeto.getGerente() != null
+            && projeto.getGerente().getId().equals(caller.getId());
+    }
 
     private void validarDatas(LocalDate inicio, LocalDate previsao) {
         if (inicio != null && previsao != null && previsao.isBefore(inicio)) {
