@@ -6,6 +6,7 @@ import com.vbaggio.projectapp.dto.ResumoProjeto;
 import com.vbaggio.projectapp.model.entity.Projeto;
 import com.vbaggio.projectapp.model.entity.Tarefa;
 import com.vbaggio.projectapp.model.entity.Usuario;
+import com.vbaggio.projectapp.model.enums.Perfil;
 import com.vbaggio.projectapp.model.enums.StatusProjeto;
 import com.vbaggio.projectapp.model.enums.StatusTarefa;
 import com.vbaggio.projectapp.repository.ProjetoRepository;
@@ -124,5 +125,17 @@ public class RelatorioController {
         return projetoRepo.listarTodos().stream()
                 .map(p -> new ProjetoOpcao(p.getId(), p.getNome()))
                 .toList();
+    }
+
+    /**
+     * Retorna a lista de projetos visíveis para o usuário na tela de relatório.
+     * ADMINISTRADOR vê todos os projetos; GERENTE vê apenas os projetos onde é gerente.
+     */
+    public List<Projeto> listarProjetosParaRelatorio(Usuario usuario) {
+        if (usuario.getPerfil() == Perfil.ADMINISTRADOR) {
+            return projetoRepo.listarTodos();
+        }
+        // GERENTE vê apenas projetos onde é gerente_id
+        return projetoRepo.listarPorGerente(usuario.getId());
     }
 }
