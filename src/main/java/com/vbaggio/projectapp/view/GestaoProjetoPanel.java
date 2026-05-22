@@ -9,6 +9,7 @@ import com.vbaggio.projectapp.model.entity.Projeto;
 import com.vbaggio.projectapp.model.entity.Tarefa;
 import com.vbaggio.projectapp.model.entity.Usuario;
 import com.vbaggio.projectapp.model.enums.Perfil;
+import com.vbaggio.projectapp.model.enums.RoleNoProjeto;
 import com.vbaggio.projectapp.model.enums.StatusProjeto;
 import com.vbaggio.projectapp.model.enums.StatusTarefa;
 import com.vbaggio.projectapp.util.DateUtils;
@@ -37,7 +38,9 @@ public class GestaoProjetoPanel extends JPanel {
     private final EquipeController  equipeCtrl  = new EquipeController();
 
     private final UUID projetoId;
+    private final Usuario usuario;
     private final Runnable onSalvar;
+    private RoleNoProjeto roleNoProjeto; // calculado no done() de carregarProjeto
 
     // Project form fields
     private final JTextField               campNome     = new JTextField(28);
@@ -51,7 +54,15 @@ public class GestaoProjetoPanel extends JPanel {
     // Task table
     private final DefaultTableModel modeloTarefas = new DefaultTableModel(
             new String[]{"ID", "Nome", "Status", "Prazo", "Responsável", "RespID", "Desc"}, 0) {
-        @Override public boolean isCellEditable(int r, int c) { return c == 2; }
+        @Override public boolean isCellEditable(int r, int c) {
+            if (c != 2) return false;
+            if (roleNoProjeto == null) return false;
+            if (roleNoProjeto == RoleNoProjeto.ADMIN
+                    || roleNoProjeto == RoleNoProjeto.GERENTE_EFETIVO) return true;
+            // COLABORADOR: only own tasks
+            String respId = (String) getValueAt(r, 5);
+            return usuario != null && usuario.getId().toString().equals(respId);
+        }
     };
     private final JTable tabelaTarefas = TableUtils.tabelaComMensagem(
             modeloTarefas, "Nenhuma tarefa. Clique em 'Nova Tarefa' para adicionar.");
@@ -66,8 +77,9 @@ public class GestaoProjetoPanel extends JPanel {
         return !tarefasNovas.isEmpty() || !tarefasEditadas.isEmpty() || !tarefasExcluidas.isEmpty();
     }
 
-    public GestaoProjetoPanel(UUID projetoId, Runnable onSalvar) {
+    public GestaoProjetoPanel(UUID projetoId, Usuario usuario, Runnable onSalvar) {
         this.projetoId = projetoId;
+        this.usuario   = usuario;
         this.onSalvar  = onSalvar;
         setLayout(new BorderLayout(0, 0));
         add(criarBlocoProjet(),  BorderLayout.NORTH);
@@ -136,8 +148,10 @@ public class GestaoProjetoPanel extends JPanel {
         tabelaTarefas.getSelectionModel().addListSelectionListener(e -> {
             if (e.getValueIsAdjusting()) return;
             boolean sel = tabelaTarefas.getSelectedRow() >= 0;
-            btnEditar.setEnabled(sel);
-            btnExcluir.setEnabled(sel);
+            boolean podeEditar = roleNoProjeto == RoleNoProjeto.ADMIN
+                              || roleNoProjeto == RoleNoProjeto.GERENTE_EFETIVO;
+            btnEditar.setEnabled(sel && podeEditar);
+            btnExcluir.setEnabled(sel && podeEditar);
         });
 
         // double-click opens edit dialog (but NOT on status column which has inline editor)
@@ -307,6 +321,9 @@ public class GestaoProjetoPanel extends JPanel {
                             }
                         }
                     }
+
+                    roleNoProjeto = calcularRole(p);
+                    aplicarConstraintesDeRole();
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(GestaoProjetoPanel.this,
                             ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
@@ -412,17 +429,17 @@ public class GestaoProjetoPanel extends JPanel {
                 // Acceptable limitation for this scope — staging is preserved on error.
                 // 1. Projeto
                 Projeto atual = projetoCtrl.buscarPorId(projetoId);
-                projetoCtrl.atualizarProjeto(projetoId, nome, desc, inicio, previsao, gerenteId, equipeId);
+                projetoCtrl.atualizarProjeto(projetoId, nome, desc, inicio, previsao, gerenteId, equipeId, usuario);
                 if (novoStatus == StatusProjeto.CONCLUIDO
                         && atual.getStatus() != StatusProjeto.CONCLUIDO) {
-                    projetoCtrl.encerrarProjeto(projetoId, dataFimHolder[0]);
+                    projetoCtrl.encerrarProjeto(projetoId, dataFimHolder[0], usuario);
                 } else if (novoStatus != atual.getStatus()) {
-                    projetoCtrl.atualizarStatus(projetoId, novoStatus);
+                    projetoCtrl.atualizarStatus(projetoId, novoStatus, usuario);
                 }
                 // 2. Novas tarefas
                 for (DadosTarefa d : novas.values()) {
                     Tarefa t = tarefaCtrl.criarTarefa(d.nome(), d.descricao(),
-                            d.prazo(), projetoId, d.responsavelId());
+                            d.prazo(), projetoId, d.responsavelId(), usuario);
                     if (d.status() != StatusTarefa.PENDENTE) {
                         tarefaCtrl.atualizarStatus(t.getId(), d.status());
                     }
@@ -431,7 +448,7 @@ public class GestaoProjetoPanel extends JPanel {
                 for (Map.Entry<UUID, DadosTarefa> e : editadas.entrySet()) {
                     UUID id = e.getKey(); DadosTarefa d = e.getValue();
                     tarefaCtrl.atualizarTarefa(id, d.nome(), d.descricao(), d.prazo());
-                    tarefaCtrl.reatribuirResponsavel(id, d.responsavelId());
+                    tarefaCtrl.reatribuirResponsavel(id, d.responsavelId(), usuario);
                     Tarefa t = tarefaCtrl.buscarPorId(id).orElseThrow();
                     if (t.getStatus() != d.status()) {
                         tarefaCtrl.atualizarStatus(id, d.status());
@@ -634,7 +651,39 @@ public class GestaoProjetoPanel extends JPanel {
     // Helpers
     // ------------------------------------------------------------------
 
+    private RoleNoProjeto calcularRole(Projeto projeto) {
+        if (usuario.getPerfil() == Perfil.ADMINISTRADOR) return RoleNoProjeto.ADMIN;
+        boolean isGerente = projeto.getGerente() != null
+            && projeto.getGerente().getId().equals(usuario.getId());
+        if (isGerente) return RoleNoProjeto.GERENTE_EFETIVO;
+        boolean isMembro = projeto.getEquipe() != null
+            && projeto.getEquipe().getMembros().stream()
+               .anyMatch(m -> m.getId().equals(usuario.getId()));
+        return isMembro ? RoleNoProjeto.COLABORADOR : RoleNoProjeto.SEM_ACESSO;
+    }
+
+    private void aplicarConstraintesDeRole() {
+        boolean podeEditar = roleNoProjeto == RoleNoProjeto.ADMIN
+                          || roleNoProjeto == RoleNoProjeto.GERENTE_EFETIVO;
+        campNome.setEditable(podeEditar);
+        campDesc.setEditable(podeEditar);
+        campInicio.setEnabled(podeEditar);
+        campPrevisao.setEnabled(podeEditar);
+        comboStatus.setEnabled(podeEditar);
+        comboEquipe.setEnabled(roleNoProjeto == RoleNoProjeto.ADMIN);
+        comboGerente.setEnabled(roleNoProjeto == RoleNoProjeto.ADMIN);
+    }
+
     private JComboBox<OpcaoItem> montarComboResponsavel() {
+        boolean podeAtribuirOutros = roleNoProjeto == RoleNoProjeto.ADMIN
+                                  || roleNoProjeto == RoleNoProjeto.GERENTE_EFETIVO;
+        if (!podeAtribuirOutros) {
+            JComboBox<OpcaoItem> combo = new JComboBox<>();
+            combo.addItem(new OpcaoItem(usuario.getId(),
+                    usuario.getNome() + " [" + usuario.getLogin() + "]"));
+            combo.setEnabled(false);
+            return combo;
+        }
         OpcaoItem equipeItem = (OpcaoItem) comboEquipe.getSelectedItem();
         List<Usuario> usuarios;
         if (equipeItem != null && equipeItem.id() != null) {
