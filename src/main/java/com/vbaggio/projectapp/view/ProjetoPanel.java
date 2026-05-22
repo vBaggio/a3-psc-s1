@@ -42,7 +42,10 @@ public class ProjetoPanel extends JPanel {
     private boolean scrollParaFim = false;
     private final Map<UUID, JFrame> janelasGestao = new HashMap<>();
 
-    public ProjetoPanel() {
+    private final Usuario usuario;
+
+    public ProjetoPanel(Usuario usuario) {
+        this.usuario = usuario;
         setLayout(new BorderLayout(0, 4));
         setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
         add(criarToolbar(), BorderLayout.NORTH);
@@ -80,6 +83,13 @@ public class ProjetoPanel extends JPanel {
         btnGerenciar.setEnabled(false);
         btnExcluir.setEnabled(false);
 
+        // Apenas ADMIN e GERENTE (global) podem criar projetos
+        if (usuario.getPerfil() == Perfil.COLABORADOR)
+            btnNovo.setEnabled(false);
+        // Apenas ADMIN pode excluir projetos
+        if (usuario.getPerfil() != Perfil.ADMINISTRADOR)
+            btnExcluir.setEnabled(false);
+
         bar.add(btnNovo); bar.add(btnGerenciar); bar.add(btnExcluir);
 
         btnNovo.setToolTipText("Criar novo projeto");
@@ -94,7 +104,8 @@ public class ProjetoPanel extends JPanel {
             if (e.getValueIsAdjusting()) return;
             boolean sel = tabela.getSelectedRow() >= 0;
             btnGerenciar.setEnabled(sel);
-            btnExcluir.setEnabled(sel);
+            if (usuario.getPerfil() == Perfil.ADMINISTRADOR)
+                btnExcluir.setEnabled(sel);
         });
 
         return bar;
@@ -192,7 +203,7 @@ public class ProjetoPanel extends JPanel {
         }
 
         final JFrame janelaFinal = new JFrame("Gerenciar Projeto — " + nome);
-        GestaoProjetoPanel gestaoPanel = new GestaoProjetoPanel(id, () -> {
+        GestaoProjetoPanel gestaoPanel = new GestaoProjetoPanel(id, usuario, () -> {
             this.carregar();
             janelaFinal.dispose();
         });
@@ -244,7 +255,7 @@ public class ProjetoPanel extends JPanel {
                 "Confirmar Exclusão", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
         if (conf != JOptionPane.YES_OPTION) return;
         try {
-            ctrl.removerProjeto(id);
+            ctrl.removerProjeto(id, usuario);
             carregar();
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
@@ -253,11 +264,18 @@ public class ProjetoPanel extends JPanel {
 
     private void carregar() {
         new SwingWorker<List<Projeto>, Void>() {
-            @Override protected List<Projeto> doInBackground() { return ctrl.listarProjetos(); }
+            @Override protected List<Projeto> doInBackground() { return ctrl.listarProjetosVisiveis(usuario); }
             @Override protected void done() {
                 try {
+                    List<Projeto> projetos = get();
                     modelo.setRowCount(0);
-                    for (Projeto p : get()) {
+                    if (projetos.isEmpty() && usuario.getPerfil() != Perfil.ADMINISTRADOR) {
+                        JOptionPane.showMessageDialog(ProjetoPanel.this,
+                            "Você não pertence a nenhuma equipe com projetos ativos.\n" +
+                            "Solicite ao administrador para ser adicionado a uma equipe.",
+                            "Sem projetos", JOptionPane.INFORMATION_MESSAGE);
+                    }
+                    for (Projeto p : projetos) {
                         modelo.addRow(new Object[]{
                                 p.getId().toString(), p.getNome(), p.getStatus(),
                                 DateUtils.format(p.getDataInicio()),
