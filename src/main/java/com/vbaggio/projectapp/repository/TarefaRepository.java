@@ -1,7 +1,9 @@
 package com.vbaggio.projectapp.repository;
 
 import com.vbaggio.projectapp.repository.JpaUtil;
+import com.vbaggio.projectapp.model.entity.Projeto;
 import com.vbaggio.projectapp.model.entity.Tarefa;
+import com.vbaggio.projectapp.model.entity.Usuario;
 import com.vbaggio.projectapp.model.enums.StatusTarefa;
 import jakarta.persistence.EntityManager;
 
@@ -19,17 +21,26 @@ public class TarefaRepository {
      *
      * @param tarefa entidade a ser salva
      */
-    public void salvar(Tarefa tarefa) {
-        EntityManager em = JpaUtil.getEntityManager();
+    public void salvar(Tarefa tarefa) { salvar(tarefa, null); }
+
+    public void salvar(Tarefa tarefa, EntityManager externalEm) {
+        boolean own = externalEm == null;
+        EntityManager em = own ? JpaUtil.getEntityManager() : externalEm;
         try {
-            em.getTransaction().begin();
+            if (own) em.getTransaction().begin();
+            if (!own) {
+                // Re-attach associations as managed proxies to avoid detached-entity issues
+                tarefa.setProjeto(em.getReference(Projeto.class, tarefa.getProjeto().getId()));
+                if (tarefa.getResponsavel() != null)
+                    tarefa.setResponsavel(em.getReference(Usuario.class, tarefa.getResponsavel().getId()));
+            }
             em.persist(tarefa);
-            em.getTransaction().commit();
+            if (own) em.getTransaction().commit();
         } catch (Exception e) {
-            em.getTransaction().rollback();
+            if (own && em.getTransaction().isActive()) em.getTransaction().rollback();
             throw e;
         } finally {
-            em.close();
+            if (own) em.close();
         }
     }
 
@@ -139,18 +150,21 @@ public class TarefaRepository {
      * @param tarefa entidade com dados atualizados (id obrigatório)
      * @return entidade gerenciada após o merge
      */
-    public Tarefa atualizar(Tarefa tarefa) {
-        EntityManager em = JpaUtil.getEntityManager();
+    public Tarefa atualizar(Tarefa tarefa) { return atualizar(tarefa, null); }
+
+    public Tarefa atualizar(Tarefa tarefa, EntityManager externalEm) {
+        boolean own = externalEm == null;
+        EntityManager em = own ? JpaUtil.getEntityManager() : externalEm;
         try {
-            em.getTransaction().begin();
+            if (own) em.getTransaction().begin();
             Tarefa atualizada = em.merge(tarefa);
-            em.getTransaction().commit();
+            if (own) em.getTransaction().commit();
             return atualizada;
         } catch (Exception e) {
-            em.getTransaction().rollback();
+            if (own && em.getTransaction().isActive()) em.getTransaction().rollback();
             throw e;
         } finally {
-            em.close();
+            if (own) em.close();
         }
     }
 
@@ -159,20 +173,21 @@ public class TarefaRepository {
      *
      * @param id UUID da tarefa a ser removida
      */
-    public void deletar(UUID id) {
-        EntityManager em = JpaUtil.getEntityManager();
+    public void deletar(UUID id) { deletar(id, null); }
+
+    public void deletar(UUID id, EntityManager externalEm) {
+        boolean own = externalEm == null;
+        EntityManager em = own ? JpaUtil.getEntityManager() : externalEm;
         try {
-            em.getTransaction().begin();
+            if (own) em.getTransaction().begin();
             Tarefa tarefa = em.find(Tarefa.class, id);
-            if (tarefa != null) {
-                em.remove(tarefa);
-            }
-            em.getTransaction().commit();
+            if (tarefa != null) em.remove(tarefa);
+            if (own) em.getTransaction().commit();
         } catch (Exception e) {
-            em.getTransaction().rollback();
+            if (own && em.getTransaction().isActive()) em.getTransaction().rollback();
             throw e;
         } finally {
-            em.close();
+            if (own) em.close();
         }
     }
 
@@ -182,10 +197,13 @@ public class TarefaRepository {
      *
      * @param projetoId UUID do projeto cujas tarefas serão canceladas
      */
-    public void cancelarPorProjeto(UUID projetoId) {
-        EntityManager em = JpaUtil.getEntityManager();
+    public void cancelarPorProjeto(UUID projetoId) { cancelarPorProjeto(projetoId, null); }
+
+    public void cancelarPorProjeto(UUID projetoId, EntityManager externalEm) {
+        boolean own = externalEm == null;
+        EntityManager em = own ? JpaUtil.getEntityManager() : externalEm;
         try {
-            em.getTransaction().begin();
+            if (own) em.getTransaction().begin();
             em.createQuery(
                     "UPDATE Tarefa t SET t.status = :cancelada " +
                     "WHERE t.projeto.id = :projetoId " +
@@ -194,12 +212,12 @@ public class TarefaRepository {
                     .setParameter("projetoId", projetoId)
                     .setParameter("ativos", java.util.List.of(StatusTarefa.PENDENTE, StatusTarefa.EM_ANDAMENTO))
                     .executeUpdate();
-            em.getTransaction().commit();
+            if (own) em.getTransaction().commit();
         } catch (Exception e) {
-            em.getTransaction().rollback();
+            if (own && em.getTransaction().isActive()) em.getTransaction().rollback();
             throw e;
         } finally {
-            em.close();
+            if (own) em.close();
         }
     }
 

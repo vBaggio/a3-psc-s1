@@ -80,6 +80,18 @@ Bugs identificados em validação manual com perfil COLABORADOR após o merge.
 
 ---
 
+## Fase 6 — Transação e Correções de Persistência (24/05/2026)
+
+Problemas identificados em validação manual com perfil ADMIN após o merge da Fase 5.
+
+| ID | Descrição da Tarefa | Status |
+|----|----------------------|--------|
+| **FIX-05** | `GestaoProjetoPanel.salvarTudo()` — `IllegalStateException: Apenas ADMINISTRADOR ou o gerente do projeto podem reatribuir tarefas` ao salvar quando COLABORADOR havia alterado apenas o status da própria tarefa. `salvarTudo()` chamava `reatribuirResponsavel()` incondicionalmente para todas as tarefas editadas, sem verificar se o responsável havia realmente mudado. Correção: verificação com `Objects.equals(respAtual, d.responsavelId())` antes de chamar `reatribuirResponsavel`. | ✅ Concluído |
+| **FIX-06** | `GestaoProjetoPanel.salvarTudo()` — alterações persistidas parcialmente em caso de falha durante o save (ex.: erro de permissão ocorria após `atualizarTarefa` já ter commitado). Solução: injeção de `EntityManager` opcional nos métodos de escrita de `TarefaRepository`, `ProjetoRepository`, `TarefaController` e `ProjetoController` (padrão: se `null`, cria o próprio EM com auto-transação). `salvarTudo()` passa a criar um único EM, executa toda a operação em uma transação e faz commit ou rollback atômico. | ✅ Concluído |
+| **FIX-07** | `ProjetoRepository.atualizar(Projeto, EntityManager)` — exclusão de tarefa via ADMIN não persistia ao banco com o EM compartilhado. Causa raiz: `em.merge(projeto)` ativava o `cascade = CascadeType.ALL, orphanRemoval = true` da collection `Projeto.tarefas`, conflitando com o `em.remove(tarefa)` posterior na mesma transação. Correção: com EM externo, substituir `em.merge()` por `em.find()` + atribuição direta dos campos escalares, evitando qualquer toque na collection de tarefas. | ✅ Concluído |
+
+---
+
 ## Ferramentas e Componentes Adotados na Sprint
 
 - **Interface Gráfica:** Java Swing (javax.swing)

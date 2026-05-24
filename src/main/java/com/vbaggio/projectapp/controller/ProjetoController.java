@@ -10,6 +10,7 @@ import com.vbaggio.projectapp.repository.ProjetoRepository;
 import com.vbaggio.projectapp.repository.TarefaRepository;
 import com.vbaggio.projectapp.repository.UsuarioRepository;
 
+import jakarta.persistence.EntityManager;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
@@ -105,6 +106,12 @@ public class ProjetoController {
     public void atualizarProjeto(UUID id, String nome, String descricao,
                                   LocalDate dataInicio, LocalDate dataPrevisao,
                                   UUID gerenteId, UUID equipeId, Usuario caller) {
+        atualizarProjeto(id, nome, descricao, dataInicio, dataPrevisao, gerenteId, equipeId, caller, null);
+    }
+
+    public void atualizarProjeto(UUID id, String nome, String descricao,
+                                  LocalDate dataInicio, LocalDate dataPrevisao,
+                                  UUID gerenteId, UUID equipeId, Usuario caller, EntityManager em) {
         if (nome == null || nome.isBlank()) {
             throw new IllegalArgumentException("O nome do projeto é obrigatório.");
         }
@@ -157,7 +164,7 @@ public class ProjetoController {
             projeto.setEquipe(equipe);
         }
 
-        projetoRepo.atualizar(projeto);
+        projetoRepo.atualizar(projeto, em);
     }
 
     /**
@@ -175,15 +182,19 @@ public class ProjetoController {
      * @return projeto atualizado
      */
     public Projeto atualizarStatus(UUID projetoId, StatusProjeto novoStatus, Usuario caller) {
+        return atualizarStatus(projetoId, novoStatus, caller, null);
+    }
+
+    public Projeto atualizarStatus(UUID projetoId, StatusProjeto novoStatus, Usuario caller, EntityManager em) {
         Projeto projeto = buscarPorId(projetoId);
         if (caller.getPerfil() != Perfil.ADMINISTRADOR && !isGerenteEfetivo(projeto, caller))
             throw new IllegalStateException("Apenas ADMINISTRADOR ou o gerente do projeto podem alterar o status.");
         validarTransicaoStatus(projeto.getStatus(), novoStatus);
         projeto.setStatus(novoStatus);
-        Projeto atualizado = projetoRepo.atualizar(projeto);
+        Projeto atualizado = projetoRepo.atualizar(projeto, em);
 
         if (novoStatus == StatusProjeto.CANCELADO) {
-            tarefaRepo.cancelarPorProjeto(projetoId);
+            tarefaRepo.cancelarPorProjeto(projetoId, em);
         }
 
         return atualizado;
@@ -199,6 +210,10 @@ public class ProjetoController {
      * @return projeto atualizado com status CONCLUIDO
      */
     public Projeto encerrarProjeto(UUID projetoId, LocalDate dataFim, Usuario caller) {
+        return encerrarProjeto(projetoId, dataFim, caller, null);
+    }
+
+    public Projeto encerrarProjeto(UUID projetoId, LocalDate dataFim, Usuario caller, EntityManager em) {
         Projeto projeto = buscarPorId(projetoId);
         if (caller.getPerfil() != Perfil.ADMINISTRADOR && !isGerenteEfetivo(projeto, caller))
             throw new IllegalStateException("Apenas ADMINISTRADOR ou o gerente do projeto podem encerrar o projeto.");
@@ -214,9 +229,7 @@ public class ProjetoController {
 
         projeto.setDataFim(dataFim);
         projeto.setStatus(StatusProjeto.CONCLUIDO);
-        Projeto concluido = projetoRepo.atualizar(projeto);
-
-        return concluido;
+        return projetoRepo.atualizar(projeto, em);
     }
 
     /**

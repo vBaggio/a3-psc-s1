@@ -1,7 +1,9 @@
 package com.vbaggio.projectapp.repository;
 
 import com.vbaggio.projectapp.repository.JpaUtil;
+import com.vbaggio.projectapp.model.entity.Equipe;
 import com.vbaggio.projectapp.model.entity.Projeto;
+import com.vbaggio.projectapp.model.entity.Usuario;
 import com.vbaggio.projectapp.model.enums.StatusProjeto;
 import jakarta.persistence.EntityManager;
 
@@ -167,18 +169,39 @@ public class ProjetoRepository {
      * @param projeto entidade com dados atualizados (id obrigatório)
      * @return entidade gerenciada após o merge
      */
-    public Projeto atualizar(Projeto projeto) {
-        EntityManager em = JpaUtil.getEntityManager();
+    public Projeto atualizar(Projeto projeto) { return atualizar(projeto, null); }
+
+    public Projeto atualizar(Projeto projeto, EntityManager externalEm) {
+        boolean own = externalEm == null;
+        EntityManager em = own ? JpaUtil.getEntityManager() : externalEm;
         try {
-            em.getTransaction().begin();
-            Projeto atualizado = em.merge(projeto);
-            em.getTransaction().commit();
-            return atualizado;
+            if (own) em.getTransaction().begin();
+            Projeto managed;
+            if (own) {
+                managed = em.merge(projeto);
+            } else {
+                // Com EM externo, copia campos escalares diretamente ao invés de merge,
+                // evitando que o cascade ALL + orphanRemoval da collection de tarefas
+                // interfira em operações de delete pendentes na mesma transação.
+                managed = em.find(Projeto.class, projeto.getId());
+                managed.setNome(projeto.getNome());
+                managed.setDescricao(projeto.getDescricao());
+                managed.setDataInicio(projeto.getDataInicio());
+                managed.setDataPrevisao(projeto.getDataPrevisao());
+                managed.setDataFim(projeto.getDataFim());
+                managed.setStatus(projeto.getStatus());
+                managed.setGerente(projeto.getGerente() != null
+                        ? em.getReference(Usuario.class, projeto.getGerente().getId()) : null);
+                managed.setEquipe(projeto.getEquipe() != null
+                        ? em.getReference(Equipe.class, projeto.getEquipe().getId()) : null);
+            }
+            if (own) em.getTransaction().commit();
+            return managed;
         } catch (Exception e) {
-            em.getTransaction().rollback();
+            if (own && em.getTransaction().isActive()) em.getTransaction().rollback();
             throw e;
         } finally {
-            em.close();
+            if (own) em.close();
         }
     }
 

@@ -10,6 +10,7 @@ import com.vbaggio.projectapp.repository.ProjetoRepository;
 import com.vbaggio.projectapp.repository.TarefaRepository;
 import com.vbaggio.projectapp.repository.UsuarioRepository;
 
+import jakarta.persistence.EntityManager;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -56,6 +57,11 @@ public class TarefaController {
      */
     public Tarefa criarTarefa(String nome, String descricao, LocalDate prazo,
                               UUID projetoId, UUID responsavelId, Usuario caller) {
+        return criarTarefa(nome, descricao, prazo, projetoId, responsavelId, caller, null);
+    }
+
+    public Tarefa criarTarefa(String nome, String descricao, LocalDate prazo,
+                              UUID projetoId, UUID responsavelId, Usuario caller, EntityManager em) {
         if (nome == null || nome.isBlank()) {
             throw new IllegalArgumentException("Nome da tarefa é obrigatório.");
         }
@@ -105,7 +111,7 @@ public class TarefaController {
             tarefa.setResponsavel(responsavel);
         }
 
-        tarefaRepo.salvar(tarefa);
+        tarefaRepo.salvar(tarefa, em);
         return tarefa;
     }
 
@@ -120,6 +126,10 @@ public class TarefaController {
      * @throws IllegalStateException    se a tarefa estiver CONCLUIDA ou CANCELADA
      */
     public void atualizarTarefa(UUID id, String nome, String descricao, LocalDate prazo) {
+        atualizarTarefa(id, nome, descricao, prazo, null);
+    }
+
+    public void atualizarTarefa(UUID id, String nome, String descricao, LocalDate prazo, EntityManager em) {
         if (nome == null || nome.isBlank()) {
             throw new IllegalArgumentException("Nome da tarefa é obrigatório.");
         }
@@ -127,7 +137,7 @@ public class TarefaController {
         tarefa.setNome(nome.trim());
         tarefa.setDescricao(descricao == null || descricao.isBlank() ? null : descricao.trim());
         tarefa.setPrazo(prazo);
-        tarefaRepo.atualizar(tarefa);
+        tarefaRepo.atualizar(tarefa, em);
     }
 
     /**
@@ -148,9 +158,13 @@ public class TarefaController {
      * @throws IllegalStateException    se a transição for inválida
      */
     public Tarefa atualizarStatus(UUID tarefaId, StatusTarefa novoStatus) {
+        return atualizarStatus(tarefaId, novoStatus, null);
+    }
+
+    public Tarefa atualizarStatus(UUID tarefaId, StatusTarefa novoStatus, EntityManager em) {
         Tarefa tarefa = buscarTarefaOuFalhar(tarefaId);
         tarefa.setStatus(novoStatus);
-        return tarefaRepo.atualizar(tarefa);
+        return tarefaRepo.atualizar(tarefa, em);
     }
 
     /**
@@ -167,6 +181,10 @@ public class TarefaController {
      * @return entidade Tarefa atualizada
      */
     public Tarefa reatribuirResponsavel(UUID tarefaId, UUID novoResponsavelId, Usuario caller) {
+        return reatribuirResponsavel(tarefaId, novoResponsavelId, caller, null);
+    }
+
+    public Tarefa reatribuirResponsavel(UUID tarefaId, UUID novoResponsavelId, Usuario caller, EntityManager em) {
         Tarefa tarefa = buscarTarefaOuFalhar(tarefaId);
 
         Projeto projeto = projetoRepo.buscarPorId(tarefa.getProjeto().getId())
@@ -196,7 +214,7 @@ public class TarefaController {
             tarefa.setResponsavel(responsavel);
         }
 
-        return tarefaRepo.atualizar(tarefa);
+        return tarefaRepo.atualizar(tarefa, em);
     }
 
     /**
@@ -238,9 +256,11 @@ public class TarefaController {
      * @throws IllegalArgumentException se a tarefa não existir
      * @throws IllegalStateException    se o status não permitir remoção
      */
-    public void removerTarefa(UUID tarefaId) {
+    public void removerTarefa(UUID tarefaId) { removerTarefa(tarefaId, null); }
+
+    public void removerTarefa(UUID tarefaId, EntityManager em) {
         buscarTarefaOuFalhar(tarefaId);
-        tarefaRepo.deletar(tarefaId);
+        tarefaRepo.deletar(tarefaId, em);
     }
 
     // ------------------------------------------------------------------

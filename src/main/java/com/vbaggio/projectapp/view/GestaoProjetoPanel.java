@@ -12,8 +12,10 @@ import com.vbaggio.projectapp.model.enums.Perfil;
 import com.vbaggio.projectapp.model.enums.RoleNoProjeto;
 import com.vbaggio.projectapp.model.enums.StatusProjeto;
 import com.vbaggio.projectapp.model.enums.StatusTarefa;
+import com.vbaggio.projectapp.repository.JpaUtil;
 import com.vbaggio.projectapp.util.DateUtils;
 import com.vbaggio.projectapp.util.OpcaoItem;
+import jakarta.persistence.EntityManager;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -24,6 +26,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
+import java.util.Objects;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -435,43 +438,53 @@ public class GestaoProjetoPanel extends JPanel {
 
         new SwingWorker<Void, Void>() {
             @Override protected Void doInBackground() throws Exception {
-                // Note: These operations run without a DB transaction. A partial failure
-                // leaves earlier steps persisted. Retry may create duplicate tasks.
-                // Acceptable limitation for this scope — staging is preserved on error.
-                // 1. Projeto — somente ADMIN e GERENTE_EFETIVO podem alterar dados do projeto
-                boolean podeEditarProjeto = roleNoProjeto == RoleNoProjeto.ADMIN
-                        || roleNoProjeto == RoleNoProjeto.GERENTE_EFETIVO;
-                if (podeEditarProjeto) {
-                    Projeto atual = projetoCtrl.buscarPorId(projetoId);
-                    projetoCtrl.atualizarProjeto(projetoId, nome, desc, inicio, previsao, gerenteId, equipeId, usuario);
-                    if (novoStatus == StatusProjeto.CONCLUIDO
-                            && atual.getStatus() != StatusProjeto.CONCLUIDO) {
-                        projetoCtrl.encerrarProjeto(projetoId, dataFimHolder[0], usuario);
-                    } else if (novoStatus != atual.getStatus()) {
-                        projetoCtrl.atualizarStatus(projetoId, novoStatus, usuario);
+                EntityManager em = JpaUtil.getEntityManager();
+                try {
+                    em.getTransaction().begin();
+                    // 1. Projeto — somente ADMIN e GERENTE_EFETIVO podem alterar dados do projeto
+                    boolean podeEditarProjeto = roleNoProjeto == RoleNoProjeto.ADMIN
+                            || roleNoProjeto == RoleNoProjeto.GERENTE_EFETIVO;
+                    if (podeEditarProjeto) {
+                        Projeto atual = projetoCtrl.buscarPorId(projetoId);
+                        projetoCtrl.atualizarProjeto(projetoId, nome, desc, inicio, previsao, gerenteId, equipeId, usuario, em);
+                        if (novoStatus == StatusProjeto.CONCLUIDO
+                                && atual.getStatus() != StatusProjeto.CONCLUIDO) {
+                            projetoCtrl.encerrarProjeto(projetoId, dataFimHolder[0], usuario, em);
+                        } else if (novoStatus != atual.getStatus()) {
+                            projetoCtrl.atualizarStatus(projetoId, novoStatus, usuario, em);
+                        }
                     }
-                }
-                // 2. Novas tarefas
-                for (DadosTarefa d : novas.values()) {
-                    Tarefa t = tarefaCtrl.criarTarefa(d.nome(), d.descricao(),
-                            d.prazo(), projetoId, d.responsavelId(), usuario);
-                    if (d.status() != StatusTarefa.PENDENTE) {
-                        tarefaCtrl.atualizarStatus(t.getId(), d.status());
+                    // 2. Novas tarefas
+                    for (DadosTarefa d : novas.values()) {
+                        Tarefa t = tarefaCtrl.criarTarefa(d.nome(), d.descricao(),
+                                d.prazo(), projetoId, d.responsavelId(), usuario, em);
+                        if (d.status() != StatusTarefa.PENDENTE) {
+                            tarefaCtrl.atualizarStatus(t.getId(), d.status(), em);
+                        }
                     }
-                }
-                // 3. Tarefas editadas
-                for (Map.Entry<UUID, DadosTarefa> e : editadas.entrySet()) {
-                    UUID id = e.getKey(); DadosTarefa d = e.getValue();
-                    tarefaCtrl.atualizarTarefa(id, d.nome(), d.descricao(), d.prazo());
-                    tarefaCtrl.reatribuirResponsavel(id, d.responsavelId(), usuario);
-                    Tarefa t = tarefaCtrl.buscarPorId(id).orElseThrow();
-                    if (t.getStatus() != d.status()) {
-                        tarefaCtrl.atualizarStatus(id, d.status());
+                    // 3. Tarefas editadas
+                    for (Map.Entry<UUID, DadosTarefa> e : editadas.entrySet()) {
+                        UUID id = e.getKey(); DadosTarefa d = e.getValue();
+                        tarefaCtrl.atualizarTarefa(id, d.nome(), d.descricao(), d.prazo(), em);
+                        Tarefa t = tarefaCtrl.buscarPorId(id).orElseThrow();
+                        UUID respAtual = t.getResponsavel() != null ? t.getResponsavel().getId() : null;
+                        if (!Objects.equals(respAtual, d.responsavelId())) {
+                            tarefaCtrl.reatribuirResponsavel(id, d.responsavelId(), usuario, em);
+                        }
+                        if (t.getStatus() != d.status()) {
+                            tarefaCtrl.atualizarStatus(id, d.status(), em);
+                        }
                     }
-                }
-                // 4. Tarefas excluídas
-                for (UUID id : excluidas) {
-                    tarefaCtrl.removerTarefa(id);
+                    // 4. Tarefas excluídas
+                    for (UUID id : excluidas) {
+                        tarefaCtrl.removerTarefa(id, em);
+                    }
+                    em.getTransaction().commit();
+                } catch (Exception ex) {
+                    if (em.getTransaction().isActive()) em.getTransaction().rollback();
+                    throw ex;
+                } finally {
+                    em.close();
                 }
                 return null;
             }

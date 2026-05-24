@@ -2,7 +2,7 @@
 
 **Responsável Principal:** Vinícius Baggio  
 **Período Avaliado:** 21/05/2026 a 24/05/2026  
-**Status do Ciclo:** Concluído  
+**Status do Ciclo:** Concluído — Pós-sprint estendida  
 
 ---
 
@@ -45,6 +45,9 @@ A **Fase 4** propagou o `Usuario` até todas as Views via lambda capture em `Hom
 | **24/05/2026** | **FIX-02 — `IllegalStateException` ao salvar como COLABORADOR:** `salvarTudo()` sempre chamava `atualizarProjeto()`, que possui guard de autorização no controller. COLABORADOR não tem permissão para editar dados do projeto, apenas tarefas. Corrigido com `if (podeEditarProjeto)` envolvendo o bloco de atualização do projeto. |
 | **24/05/2026** | **FIX-03 — aparência inconsistente de campos read-only:** Nome e Descrição usavam `setEditable(false)` (fundo branco, cursor ativo) enquanto os demais campos usavam `setEnabled(false)` (aparência desabilitada). Padronizado para `setEnabled`. |
 | **24/05/2026** | **FIX-04 — tecla Delete e double-click sem guard de role:** O `ActionMap` da tecla Delete executava `excluirTarefa()` sem verificar o role, contornando o `btnExcluir` desabilitado. O `MouseListener` de double-click abria edição de qualquer tarefa mesmo para COLABORADOR. Ambos corrigidos: Delete com guard de role; double-click com `podeEditarTarefa(viewRow)`, que retorna `true` para ADMIN/GERENTE ou quando a tarefa pertence ao próprio COLABORADOR. Aproveitou-se a mesma lógica para corrigir o `ListSelectionListener` do `btnEditar`, que agora habilita o botão para COLABORADOR quando a tarefa selecionada é sua. |
+| **24/05/2026** | **FIX-05 — `reatribuirResponsavel` chamado incondicionalmente:** COLABORADOR alterando apenas o status da própria tarefa recebia `IllegalStateException` de permissão ao salvar. `salvarTudo()` chamava `reatribuirResponsavel()` para toda tarefa em `tarefasEditadas` sem verificar se o responsável havia mudado. Correção: guard `Objects.equals(respAtual, d.responsavelId())` — o método só é chamado quando o responsável efetivamente muda. |
+| **24/05/2026** | **FIX-06 — persistência parcial em caso de erro no save:** Antes do fix, cada operação de `salvarTudo()` commitava em sua própria transação. Uma falha a meio do processo (ex.: permissão negada após `atualizarTarefa` já ter persistido) deixava dados inconsistentes no banco. Solução: injeção de `EntityManager` opcional nos métodos de escrita de `TarefaRepository`, `ProjetoRepository`, `TarefaController` e `ProjetoController`. O método sem parâmetro cria o próprio EM (comportamento original preservado); com EM externo, delega transação ao chamador. `salvarTudo()` agora cria um único EM, envolve toda a operação em `begin/commit/rollback`, garantindo atomicidade. |
+| **24/05/2026** | **FIX-07 — exclusão de tarefa não persistia com EM compartilhado:** Após o FIX-06, delete de tarefa via ADMIN não era gravado no banco. Causa raiz: `ProjetoRepository.atualizar(Projeto, EntityManager)` usava `em.merge(projeto)`, que ativava o `cascade = CascadeType.ALL, orphanRemoval = true` da collection `Projeto.tarefas`. O Hibernate inicializava a collection durante o merge e, ao encontrar a tarefa excluída ainda presente nela, conflitava com o `em.remove(tarefa)` posterior na mesma transação. Correção: com EM externo, substitui `em.merge()` por `em.find(Projeto)` + atribuição direta dos campos escalares (`nome`, `descricao`, `dataInicio`, `dataPrevisao`, `dataFim`, `status`, `gerente`, `equipe`) via `em.getReference()` para as associações. A collection `tarefas` nunca é tocada, eliminando o conflito com o delete. |
 
 ---
 
@@ -79,6 +82,10 @@ O terceiro desafio foi o `LazyInitializationException` latente em `reatribuirRes
 | `RelatorioPanel` — construtor `(Usuario)` + combo filtrado | `src/main/java/.../view/RelatorioPanel.java` | Modificado |
 | `ProjetoPanel` — construtor `(Usuario)` + lista filtrada + guards UI | `src/main/java/.../view/ProjetoPanel.java` | Modificado |
 | `GestaoProjetoPanel` — `RoleNoProjeto`, constraints, `isCellEditable`, combo restrito, cancelar fecha janela | `src/main/java/.../view/GestaoProjetoPanel.java` | Modificado |
+| `TarefaRepository` — sobrecargas `salvar/atualizar/deletar/cancelarPorProjeto` com `EntityManager` opcional | `src/main/java/.../repository/TarefaRepository.java` | Modificado |
+| `ProjetoRepository` — sobrecarga `atualizar` com `EntityManager` opcional; find+set direto para EM externo | `src/main/java/.../repository/ProjetoRepository.java` | Modificado |
+| `TarefaController` — sobrecargas com `EntityManager` em `criarTarefa`, `atualizarTarefa`, `atualizarStatus`, `reatribuirResponsavel`, `removerTarefa` | `src/main/java/.../controller/TarefaController.java` | Modificado |
+| `ProjetoController` — sobrecargas com `EntityManager` em `atualizarProjeto`, `atualizarStatus`, `encerrarProjeto` | `src/main/java/.../controller/ProjetoController.java` | Modificado |
 
 ---
 
@@ -93,4 +100,5 @@ O terceiro desafio foi o `LazyInitializationException` latente em `reatribuirRes
 | Cards visíveis para GERENTE | 5 | 5 (Cargos/Usuários/Equipes em read-only) |
 | Escalação de privilégio (alteração de perfil) | Possível | Bloqueada — guard em `atualizarUsuario` |
 | Migrations | V1–V6 | V1–V7 (V3/V4 refatoradas, V7 criada) |
-| Commits da sprint | — | 15 |
+| Atomicidade do save | Nenhuma (cada operação em transação própria) | Transação única por `salvarTudo()` — rollback total em caso de erro |
+| Commits da sprint | — | 16 |
