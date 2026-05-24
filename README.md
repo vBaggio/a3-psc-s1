@@ -111,17 +111,9 @@ Controle de acesso calculado por projeto: guards com `caller` nos controllers, f
 - Docker e Docker Compose
 
 ### 1. Configurar credenciais do banco
-Copie o template e preencha com as credenciais do Docker Compose:
+Copie o template — as credenciais padrão já estão preenchidas e funcionam com o Docker Compose incluído:
 ```bash
 cp src/main/resources/db.properties.example src/main/resources/db.properties
-```
-Edite o arquivo gerado com os seguintes valores:
-```properties
-db.url=jdbc:postgresql://localhost:5433/projectapp
-db.usuario=postgres
-db.senha=postgres
-db.driver=org.postgresql.Driver
-db.persistence_unit=projectapp-pu
 ```
 
 ### 2. Subir o banco de dados

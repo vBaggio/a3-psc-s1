@@ -4,7 +4,7 @@
 # ============================================================
 
 db.url=jdbc:postgresql://localhost:5433/projectapp
-db.usuario=SEU_USUARIO
-db.senha=SUA_SENHA
+db.usuario=postgres
+db.senha=postgres
 db.driver=org.postgresql.Driver
 db.persistence_unit=projectapp-pu
