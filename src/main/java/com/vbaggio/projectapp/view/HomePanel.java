@@ -80,20 +80,18 @@ public class HomePanel extends JPanel {
         Perfil perfil = usuario.getPerfil();
 
         JPanel row1 = fileira();
-        // Cargos: COLABORADOR não vê
-        if (perfil != Perfil.COLABORADOR)
+        // Cargos, Usuários, Equipes: apenas ADMIN
+        if (perfil == Perfil.ADMINISTRADOR)
             row1.add(card(0, "C", "Cargos",   "Funções e papéis",    "cargos",   "Cargos",   () -> new CargoPanel(usuario),   new Dimension(480, 420)));
-        // Usuários: COLABORADOR não vê
-        if (perfil != Perfil.COLABORADOR)
+        if (perfil == Perfil.ADMINISTRADOR)
             row1.add(card(1, "U", "Usuários", "Contas e permissões", "usuarios", "Usuários", () -> new UsuarioPanel(usuario), new Dimension(820, 520)));
-        // Equipes: COLABORADOR não vê
-        if (perfil != Perfil.COLABORADOR)
+        if (perfil == Perfil.ADMINISTRADOR)
             row1.add(card(2, "E", "Equipes",  "Times e alocações",   "equipes",  "Equipes",  () -> new EquipePanel(usuario),  new Dimension(780, 520)));
 
         JPanel row2 = fileira();
         // Projetos: todos veem
         row2.add(card(3, "P", "Projetos",   "Ciclo de vida e status", "projetos",   "Projetos",                 () -> new ProjetoPanel(usuario),   new Dimension(820, 520)));
-        // Relatórios: COLABORADOR não vê
+        // Relatórios: ADMIN e GERENTE veem
         if (perfil != Perfil.COLABORADOR)
             row2.add(card(4, "R", "Relatórios", "Desempenho e métricas", "relatorios", "Relatórios de Desempenho", () -> new RelatorioPanel(usuario), new Dimension(860, 540)));
 
