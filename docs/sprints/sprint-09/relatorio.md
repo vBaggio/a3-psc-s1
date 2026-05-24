@@ -1,7 +1,7 @@
 # Relatório Semanal de Desenvolvimento - Sprint 9
 
 **Responsável Principal:** Vinícius Baggio  
-**Período Avaliado:** 21/05/2026 a 22/05/2026  
+**Período Avaliado:** 21/05/2026 a 24/05/2026  
 **Status do Ciclo:** Concluído  
 
 ---
@@ -41,6 +41,10 @@ A **Fase 4** propagou o `Usuario` até todas as Views via lambda capture em `Hom
 | **21/05/2026** | **`GestaoProjetoPanel` — constraints no `done()` do SwingWorker:** `aplicarConstraintesDeRole()` é chamado após popular todos os campos do formulário, garantindo que a desabilitação não seja sobrescrita pela população do form. Chamar no construtor (antes do carregamento) seria ineficaz pois `roleNoProjeto` ainda seria `null`. |
 | **21/05/2026** | **`GestaoProjetoPanel.isCellEditable` — coluna de responsável:** O guard para COLABORADOR lê a coluna 5 (`RespID`, coluna oculta) para comparar com `usuario.getId()`. A coluna está oculta na UI (`ocultarColuna(5)`) mas presente no modelo — acessível via `getValueAt(r, 5)`. |
 | **22/05/2026** | **Merge para master via fast-forward:** 15 commits integrados. BUILD SUCCESS verificado no master após o merge. |
+| **24/05/2026** | **FIX-01 — `LazyInitializationException` em `Equipe.membros`:** `calcularRole()` acessava `projeto.getEquipe().getMembros()` no `done()` do SwingWorker, após o fechamento da sessão JPA. Corrigido carregando os membros via `equipeCtrl.listarMembros()` dentro do `doInBackground()` e passando o resultado como parâmetro a `calcularRole(Projeto, List<Usuario>)`. |
+| **24/05/2026** | **FIX-02 — `IllegalStateException` ao salvar como COLABORADOR:** `salvarTudo()` sempre chamava `atualizarProjeto()`, que possui guard de autorização no controller. COLABORADOR não tem permissão para editar dados do projeto, apenas tarefas. Corrigido com `if (podeEditarProjeto)` envolvendo o bloco de atualização do projeto. |
+| **24/05/2026** | **FIX-03 — aparência inconsistente de campos read-only:** Nome e Descrição usavam `setEditable(false)` (fundo branco, cursor ativo) enquanto os demais campos usavam `setEnabled(false)` (aparência desabilitada). Padronizado para `setEnabled`. |
+| **24/05/2026** | **FIX-04 — tecla Delete e double-click sem guard de role:** O `ActionMap` da tecla Delete executava `excluirTarefa()` sem verificar o role, contornando o `btnExcluir` desabilitado. O `MouseListener` de double-click abria edição de qualquer tarefa mesmo para COLABORADOR. Ambos corrigidos: Delete com guard de role; double-click com `podeEditarTarefa(viewRow)`, que retorna `true` para ADMIN/GERENTE ou quando a tarefa pertence ao próprio COLABORADOR. Aproveitou-se a mesma lógica para corrigir o `ListSelectionListener` do `btnEditar`, que agora habilita o botão para COLABORADOR quando a tarefa selecionada é sua. |
 
 ---
 

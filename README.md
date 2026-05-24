@@ -35,6 +35,7 @@ A arquitetura de software utiliza a **Composição de Objetos** para garantir um
 - **Banco de Dados:** PostgreSQL
 - **Gerenciador de Dependências e Build:** Apache Maven
 - **Interface Gráfica (GUI):** Java Swing + FlatLaf 3.4.1 (FlatDarkLaf)
+- **Hash de Senhas:** jBCrypt
 - **Padrão Arquitetural:** MVC (Model-View-Controller)
 - **Modelagem Visual:** Astah UML & Draw.io
 
@@ -53,7 +54,7 @@ O desenvolvimento arquitetural e o processo avaliativo do sistema iteram em proc
 | **Sprint 6** | 26/04 – 02/05/2026 | Relatórios de Desempenho | ✅ Completo |
 | **Sprint 7** | 03/05 – 07/05/2026 | Qualidade de UI & Redesign do Módulo de Projetos | ✅ Completo |
 | **Sprint 8** | 14/05 – 21/05/2026 | Vínculo Equipe↔Projeto & Restrição de Responsável de Tarefa | ✅ Completo |
-| **Sprint 9** | 21/05 – 22/05/2026 | Controle de Acesso por Papel Efetivo por Projeto | ✅ Completo |
+| **Sprint 9** | 21/05 – 24/05/2026 | Controle de Acesso por Papel Efetivo por Projeto | ✅ Completo |
 
 ---
 
@@ -97,7 +98,7 @@ Correção do modelo de dados equipe↔projeto de ManyToMany para ManyToOne: mig
 - 👉 [Sprint Backlog](docs/sprints/sprint-08/backlog.md)
 - 👉 [Relatório de Desenvolvimento](docs/sprints/sprint-08/relatorio.md)
 
-#### Sprint 9 — Controle de Acesso por Papel Efetivo por Projeto `21/05 – 22/05/2026` ✅
+#### Sprint 9 — Controle de Acesso por Papel Efetivo por Projeto `21/05 – 24/05/2026` ✅
 Controle de acesso calculado por projeto: guards com `caller` nos controllers, filtro de visibilidade de projetos por perfil, cards do HomePanel filtrados por perfil, painéis de administração em read-only para GERENTE e constraints completas em `GestaoProjetoPanel`. Inclui cargos pré-cadastrados nas migrations.
 - 👉 [Sprint Backlog](docs/sprints/sprint-09/backlog.md)
 - 👉 [Relatório de Desenvolvimento](docs/sprints/sprint-09/relatorio.md)
@@ -110,11 +111,11 @@ Controle de acesso calculado por projeto: guards com `caller` nos controllers, f
 - Docker e Docker Compose
 
 ### 1. Configurar credenciais do banco
-Copie o template de configuração:
+Copie o template e preencha com as credenciais do Docker Compose:
 ```bash
 cp src/main/resources/db.properties.example src/main/resources/db.properties
 ```
-O arquivo gerado já pode ser usado com os valores padrão do Docker Compose:
+Edite o arquivo gerado com os seguintes valores:
 ```properties
 db.url=jdbc:postgresql://localhost:5433/projectapp
 db.usuario=postgres

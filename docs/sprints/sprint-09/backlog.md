@@ -1,6 +1,6 @@
 # Sprint Backlog - Sprint 9
 
-**Período Inicial/Final:** 21/05/2026 a 22/05/2026  
+**Período Inicial/Final:** 21/05/2026 a 24/05/2026  
 **Responsável do Projeto:** Vinícius Baggio  
 **Objetivo da Sprint:** Implementar controle de acesso por papel efetivo em cada projeto — calculado dinamicamente como `ADMIN > gerente_id do projeto > membro da equipe > sem acesso` — com guards nos controllers e restrições visuais nas Views por perfil. A sprint também corrigiu o botão Cancelar da tela de Gestão de Projeto e introduziu cargos pré-cadastrados nas migrations.
 
@@ -63,7 +63,20 @@ Itens identificados antes da execução do plano principal, implementados como p
 | **TSK-18** | `EquipePanel` — mesmo padrão de `CargoPanel`. Promover 5 botões de variáveis locais a campos de instância; desabilitar todos para não-ADMIN. | ✅ Concluído |
 | **TSK-19** | `RelatorioPanel` — adicionar `private final Usuario usuario`, construtor `RelatorioPanel(Usuario)`. Atualizar `popularComboProjetos()` para chamar `ctrl.listarProjetosParaRelatorio(usuario)` em vez do método anterior. | ✅ Concluído |
 | **TSK-20** | `ProjetoPanel` — adicionar `private final Usuario usuario`, construtor `ProjetoPanel(Usuario)`. Atualizar `carregar()` para `ctrl.listarProjetosVisiveis(usuario)`. Exibir mensagem informativa para não-ADMIN com lista vazia. Desabilitar `btnNovo` para COLABORADOR, `btnExcluir` para não-ADMIN (incluindo guard no `ListSelectionListener`). Atualizar `abrirGestao()` com `new GestaoProjetoPanel(id, usuario, ...)` e `excluir()` com `ctrl.removerProjeto(id, usuario)`. | ✅ Concluído |
-| **TSK-21** | `GestaoProjetoPanel` — adicionar `private final Usuario usuario` e `private RoleNoProjeto roleNoProjeto`. Construtor atualizado para `(UUID, Usuario, Runnable)`. Métodos privados `calcularRole(Projeto)` e `aplicarConstraintesDeRole()` calculam e aplicam constraints de campos e combos. Chamar ambos no `done()` de `carregarProjeto()`. `isCellEditable` atualizado para checar `roleNoProjeto` e, para COLABORADOR, verificar `usuario.getId() == respId` (coluna 5). `montarComboResponsavel()` retorna combo desabilitado com self-only para não-ADMIN/não-gerente. `ListSelectionListener` de btnEditar/btnExcluir restrito a ADMIN/GERENTE_EFETIVO. Todas as 5 chamadas de controller em `salvarTudo()` atualizadas com `, usuario`. | ✅ Concluído |
+| **TSK-21** | `GestaoProjetoPanel` — adicionar `private final Usuario usuario` e `private RoleNoProjeto roleNoProjeto`. Construtor atualizado para `(UUID, Usuario, Runnable)`. Métodos privados `calcularRole(Projeto, List<Usuario>)` e `aplicarConstraintesDeRole()` calculam e aplicam constraints de campos e combos. Chamar ambos no `done()` de `carregarProjeto()`. `isCellEditable` atualizado para checar `roleNoProjeto` e, para COLABORADOR, verificar `usuario.getId() == respId` (coluna 5). `montarComboResponsavel()` retorna combo desabilitado com self-only para não-ADMIN/não-gerente. `btnEditar` habilitado para ADMIN/GERENTE_EFETIVO em qualquer tarefa e para COLABORADOR apenas nas próprias tarefas (via `podeEditarTarefa(viewRow)`); `btnExcluir` restrito a ADMIN/GERENTE_EFETIVO. Todas as 5 chamadas de controller em `salvarTudo()` atualizadas com `, usuario`. | ✅ Concluído |
+
+---
+
+## Fase 5 — Correções Pós-Sprint (24/05/2026)
+
+Bugs identificados em validação manual com perfil COLABORADOR após o merge.
+
+| ID | Descrição da Tarefa | Status |
+|----|----------------------|--------|
+| **FIX-01** | `GestaoProjetoPanel.carregarProjeto()` — `LazyInitializationException` em `Equipe.membros` ao abrir a tela como COLABORADOR. `calcularRole()` acessava `projeto.getEquipe().getMembros()` no `done()` do SwingWorker (sessão JPA fechada). Correção: carregar membros via `equipeCtrl.listarMembros()` no `doInBackground()` e passar como parâmetro a `calcularRole(Projeto, List<Usuario>)`. | ✅ Concluído |
+| **FIX-02** | `GestaoProjetoPanel.salvarTudo()` — `IllegalStateException: Apenas ADMINISTRADOR ou o gerente do projeto podem editar` ao salvar tarefas como COLABORADOR. `doInBackground()` sempre chamava `atualizarProjeto()` independente do role. Correção: envolver a atualização do projeto em `if (podeEditarProjeto)`. | ✅ Concluído |
+| **FIX-03** | `GestaoProjetoPanel.aplicarConstraintesDeRole()` — campos Nome e Descrição exibiam `setEditable(false)` (fundo branco, aparência habilitada) enquanto os demais campos usavam `setEnabled(false)` (aparência desabilitada). Padronizado para `setEnabled`. | ✅ Concluído |
+| **FIX-04** | `GestaoProjetoPanel` — tecla Delete excluía tarefas para COLABORADOR mesmo com o botão Excluir desabilitado. O `ActionMap` não verificava role. Correção: guard de role adicionado no action. Double-click também abria edição de qualquer tarefa para COLABORADOR — corrigido com `podeEditarTarefa(viewRow)` no `MouseListener`. | ✅ Concluído |
 
 ---
 

@@ -147,18 +147,22 @@ public class GestaoProjetoPanel extends JPanel {
 
         tabelaTarefas.getSelectionModel().addListSelectionListener(e -> {
             if (e.getValueIsAdjusting()) return;
-            boolean sel = tabelaTarefas.getSelectedRow() >= 0;
-            boolean podeEditar = roleNoProjeto == RoleNoProjeto.ADMIN
-                              || roleNoProjeto == RoleNoProjeto.GERENTE_EFETIVO;
-            btnEditar.setEnabled(sel && podeEditar);
-            btnExcluir.setEnabled(sel && podeEditar);
+            int viewRow = tabelaTarefas.getSelectedRow();
+            boolean temSelecao = viewRow >= 0;
+            boolean podeEditarQualquer = roleNoProjeto == RoleNoProjeto.ADMIN
+                                      || roleNoProjeto == RoleNoProjeto.GERENTE_EFETIVO;
+            boolean ehMinhaTarefa = temSelecao && usuario != null && podeEditarTarefa(viewRow);
+            btnEditar.setEnabled(temSelecao && (podeEditarQualquer || ehMinhaTarefa));
+            btnExcluir.setEnabled(temSelecao && podeEditarQualquer);
         });
 
         // double-click opens edit dialog (but NOT on status column which has inline editor)
         tabelaTarefas.addMouseListener(new MouseAdapter() {
             @Override public void mouseClicked(MouseEvent e) {
-                if (e.getClickCount() == 2 && tabelaTarefas.getSelectedRow() >= 0
-                        && tabelaTarefas.columnAtPoint(e.getPoint()) != 2) editarTarefa();
+                int viewRow = tabelaTarefas.getSelectedRow();
+                if (e.getClickCount() == 2 && viewRow >= 0
+                        && tabelaTarefas.columnAtPoint(e.getPoint()) != 2
+                        && podeEditarTarefa(viewRow)) editarTarefa();
             }
         });
 
@@ -167,7 +171,9 @@ public class GestaoProjetoPanel extends JPanel {
                 .put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "excluirTarefa");
         tabelaTarefas.getActionMap().put("excluirTarefa", new AbstractAction() {
             @Override public void actionPerformed(ActionEvent e) {
-                if (tabelaTarefas.getSelectedRow() >= 0) excluirTarefa();
+                boolean podeExcluir = roleNoProjeto == RoleNoProjeto.ADMIN
+                        || roleNoProjeto == RoleNoProjeto.GERENTE_EFETIVO;
+                if (tabelaTarefas.getSelectedRow() >= 0 && podeExcluir) excluirTarefa();
             }
         });
 
@@ -280,15 +286,20 @@ public class GestaoProjetoPanel extends JPanel {
                 List<Equipe>  equipes  = equipeCtrl.listarEquipes().stream()
                         .filter(e -> !equipeCtrl.listarMembros(e.getId()).isEmpty())
                         .toList();
-                return new Object[]{p, gerentes, equipes};
+                // Load members inside the JPA session to avoid LazyInitializationException
+                List<Usuario> membrosEquipe = (p.getEquipe() != null)
+                        ? equipeCtrl.listarMembros(p.getEquipe().getId())
+                        : List.of();
+                return new Object[]{p, gerentes, equipes, membrosEquipe};
             }
             @Override @SuppressWarnings("unchecked")
             protected void done() {
                 try {
                     Object[] resultado = get();
-                    Projeto       p        = (Projeto)       resultado[0];
-                    List<Usuario> gerentes = (List<Usuario>) resultado[1];
-                    List<Equipe>  equipes  = (List<Equipe>)  resultado[2];
+                    Projeto       p             = (Projeto)       resultado[0];
+                    List<Usuario> gerentes      = (List<Usuario>) resultado[1];
+                    List<Equipe>  equipes       = (List<Equipe>)  resultado[2];
+                    List<Usuario> membrosEquipe = (List<Usuario>) resultado[3];
 
                     campNome.setText(p.getNome());
                     campDesc.setText(p.getDescricao() != null ? p.getDescricao() : "");
@@ -322,7 +333,7 @@ public class GestaoProjetoPanel extends JPanel {
                         }
                     }
 
-                    roleNoProjeto = calcularRole(p);
+                    roleNoProjeto = calcularRole(p, membrosEquipe);
                     aplicarConstraintesDeRole();
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(GestaoProjetoPanel.this,
@@ -427,14 +438,18 @@ public class GestaoProjetoPanel extends JPanel {
                 // Note: These operations run without a DB transaction. A partial failure
                 // leaves earlier steps persisted. Retry may create duplicate tasks.
                 // Acceptable limitation for this scope — staging is preserved on error.
-                // 1. Projeto
-                Projeto atual = projetoCtrl.buscarPorId(projetoId);
-                projetoCtrl.atualizarProjeto(projetoId, nome, desc, inicio, previsao, gerenteId, equipeId, usuario);
-                if (novoStatus == StatusProjeto.CONCLUIDO
-                        && atual.getStatus() != StatusProjeto.CONCLUIDO) {
-                    projetoCtrl.encerrarProjeto(projetoId, dataFimHolder[0], usuario);
-                } else if (novoStatus != atual.getStatus()) {
-                    projetoCtrl.atualizarStatus(projetoId, novoStatus, usuario);
+                // 1. Projeto — somente ADMIN e GERENTE_EFETIVO podem alterar dados do projeto
+                boolean podeEditarProjeto = roleNoProjeto == RoleNoProjeto.ADMIN
+                        || roleNoProjeto == RoleNoProjeto.GERENTE_EFETIVO;
+                if (podeEditarProjeto) {
+                    Projeto atual = projetoCtrl.buscarPorId(projetoId);
+                    projetoCtrl.atualizarProjeto(projetoId, nome, desc, inicio, previsao, gerenteId, equipeId, usuario);
+                    if (novoStatus == StatusProjeto.CONCLUIDO
+                            && atual.getStatus() != StatusProjeto.CONCLUIDO) {
+                        projetoCtrl.encerrarProjeto(projetoId, dataFimHolder[0], usuario);
+                    } else if (novoStatus != atual.getStatus()) {
+                        projetoCtrl.atualizarStatus(projetoId, novoStatus, usuario);
+                    }
                 }
                 // 2. Novas tarefas
                 for (DadosTarefa d : novas.values()) {
@@ -651,22 +666,29 @@ public class GestaoProjetoPanel extends JPanel {
     // Helpers
     // ------------------------------------------------------------------
 
-    private RoleNoProjeto calcularRole(Projeto projeto) {
+    private boolean podeEditarTarefa(int viewRow) {
+        if (roleNoProjeto == RoleNoProjeto.ADMIN || roleNoProjeto == RoleNoProjeto.GERENTE_EFETIVO)
+            return true;
+        int modelRow = tabelaTarefas.convertRowIndexToModel(viewRow);
+        String respId = (String) modeloTarefas.getValueAt(modelRow, 5);
+        return usuario != null && usuario.getId().toString().equals(respId);
+    }
+
+    private RoleNoProjeto calcularRole(Projeto projeto, List<Usuario> membrosEquipe) {
         if (usuario.getPerfil() == Perfil.ADMINISTRADOR) return RoleNoProjeto.ADMIN;
         boolean isGerente = projeto.getGerente() != null
             && projeto.getGerente().getId().equals(usuario.getId());
         if (isGerente) return RoleNoProjeto.GERENTE_EFETIVO;
-        boolean isMembro = projeto.getEquipe() != null
-            && projeto.getEquipe().getMembros().stream()
-               .anyMatch(m -> m.getId().equals(usuario.getId()));
+        boolean isMembro = membrosEquipe.stream()
+                .anyMatch(m -> m.getId().equals(usuario.getId()));
         return isMembro ? RoleNoProjeto.COLABORADOR : RoleNoProjeto.SEM_ACESSO;
     }
 
     private void aplicarConstraintesDeRole() {
         boolean podeEditar = roleNoProjeto == RoleNoProjeto.ADMIN
                           || roleNoProjeto == RoleNoProjeto.GERENTE_EFETIVO;
-        campNome.setEditable(podeEditar);
-        campDesc.setEditable(podeEditar);
+        campNome.setEnabled(podeEditar);
+        campDesc.setEnabled(podeEditar);
         campInicio.setEnabled(podeEditar);
         campPrevisao.setEnabled(podeEditar);
         comboStatus.setEnabled(podeEditar);
