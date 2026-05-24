@@ -39,6 +39,39 @@ A arquitetura de software utiliza a **Composição de Objetos** para garantir um
 - **Padrão Arquitetural:** MVC (Model-View-Controller)
 - **Modelagem Visual:** Astah UML & Draw.io
 
+## 🚀 Como Executar Localmente
+
+### Pré-requisitos
+- Java 21+
+- Maven 3.x
+- Docker e Docker Compose
+
+### 1. Configurar credenciais do banco
+Copie o template — as credenciais padrão já estão preenchidas e funcionam com o Docker Compose incluído:
+```bash
+cp src/main/resources/db.properties.example src/main/resources/db.properties
+```
+
+### 2. Subir o banco de dados
+```bash
+docker compose up -d
+```
+
+### 3. Compilar e executar a aplicação
+```bash
+mvn compile exec:java -Dexec.mainClass="com.vbaggio.projectapp.Application"
+```
+> As migrações Flyway são executadas automaticamente na inicialização — não é necessário rodá-las manualmente.
+
+### 4. Acessar o sistema
+Na tela de login, utilize um dos usuários criados automaticamente pelas migrations:
+
+| Login | Senha | Perfil |
+|-------|-------|--------|
+| `admin` | `123` | Administrador |
+| `gerente` | `123` | Gerente |
+| `usuario` | `123` | Colaborador |
+
 ## 📂 Documentação e Evolução do Projeto
 O desenvolvimento arquitetural e o processo avaliativo do sistema iteram em processos de *Sprints Semanais*. Abaixo encontra-se o índice centralizador dos meus levantamentos, decisões técnicas pessoais e relatórios métricos.
 
@@ -102,36 +135,3 @@ Correção do modelo de dados equipe↔projeto de ManyToMany para ManyToOne: mig
 Controle de acesso calculado por projeto: guards com `caller` nos controllers, filtro de visibilidade de projetos por perfil, cards do HomePanel filtrados por perfil, painéis de administração em read-only para GERENTE e constraints completas em `GestaoProjetoPanel`. Inclui cargos pré-cadastrados nas migrations.
 - 👉 [Sprint Backlog](docs/sprints/sprint-09/backlog.md)
 - 👉 [Relatório de Desenvolvimento](docs/sprints/sprint-09/relatorio.md)
-
-## 🚀 Como Executar Localmente
-
-### Pré-requisitos
-- Java 21+
-- Maven 3.x
-- Docker e Docker Compose
-
-### 1. Configurar credenciais do banco
-Copie o template — as credenciais padrão já estão preenchidas e funcionam com o Docker Compose incluído:
-```bash
-cp src/main/resources/db.properties.example src/main/resources/db.properties
-```
-
-### 2. Subir o banco de dados
-```bash
-docker compose up -d
-```
-
-### 3. Compilar e executar a aplicação
-```bash
-mvn compile exec:java -Dexec.mainClass="com.vbaggio.projectapp.Application"
-```
-> As migrações Flyway são executadas automaticamente na inicialização — não é necessário rodá-las manualmente.
-
-### 4. Acessar o sistema
-Na tela de login, utilize um dos usuários criados automaticamente pelas migrations:
-
-| Login | Senha | Perfil |
-|-------|-------|--------|
-| `admin` | `123` | Administrador |
-| `gerente` | `123` | Gerente |
-| `usuario` | `123` | Colaborador |
