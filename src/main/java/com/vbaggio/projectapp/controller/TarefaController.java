@@ -133,7 +133,7 @@ public class TarefaController {
         if (nome == null || nome.isBlank()) {
             throw new IllegalArgumentException("Nome da tarefa é obrigatório.");
         }
-        Tarefa tarefa = buscarTarefaOuFalhar(id);
+        Tarefa tarefa = buscarTarefaOuFalhar(id, em);
         tarefa.setNome(nome.trim());
         tarefa.setDescricao(descricao == null || descricao.isBlank() ? null : descricao.trim());
         tarefa.setPrazo(prazo);
@@ -162,7 +162,7 @@ public class TarefaController {
     }
 
     public Tarefa atualizarStatus(UUID tarefaId, StatusTarefa novoStatus, EntityManager em) {
-        Tarefa tarefa = buscarTarefaOuFalhar(tarefaId);
+        Tarefa tarefa = buscarTarefaOuFalhar(tarefaId, em);
         tarefa.setStatus(novoStatus);
         return tarefaRepo.atualizar(tarefa, em);
     }
@@ -185,7 +185,7 @@ public class TarefaController {
     }
 
     public Tarefa reatribuirResponsavel(UUID tarefaId, UUID novoResponsavelId, Usuario caller, EntityManager em) {
-        Tarefa tarefa = buscarTarefaOuFalhar(tarefaId);
+        Tarefa tarefa = buscarTarefaOuFalhar(tarefaId, em);
 
         Projeto projeto = projetoRepo.buscarPorId(tarefa.getProjeto().getId())
                 .orElseThrow(() -> new IllegalArgumentException("Projeto não encontrado."));
@@ -259,7 +259,7 @@ public class TarefaController {
     public void removerTarefa(UUID tarefaId) { removerTarefa(tarefaId, null); }
 
     public void removerTarefa(UUID tarefaId, EntityManager em) {
-        buscarTarefaOuFalhar(tarefaId);
+        buscarTarefaOuFalhar(tarefaId, em);
         tarefaRepo.deletar(tarefaId, em);
     }
 
@@ -268,6 +268,17 @@ public class TarefaController {
     // ------------------------------------------------------------------
 
     private Tarefa buscarTarefaOuFalhar(UUID tarefaId) {
+        return buscarTarefaOuFalhar(tarefaId, null);
+    }
+
+    // Quando há EM externo, usa em.find() para enxergar entidades ainda não
+    // flushed na transação corrente (ex.: tarefa recém-criada no mesmo save).
+    private Tarefa buscarTarefaOuFalhar(UUID tarefaId, EntityManager em) {
+        if (em != null) {
+            Tarefa t = em.find(Tarefa.class, tarefaId);
+            if (t == null) throw new IllegalArgumentException("Tarefa não encontrada.");
+            return t;
+        }
         return tarefaRepo.buscarPorId(tarefaId)
                 .orElseThrow(() -> new IllegalArgumentException("Tarefa não encontrada."));
     }
